@@ -11,7 +11,11 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import kotlinx.serialization.json.Json
 import io.ktor.serialization.kotlinx.json.json
+import studio.tearule.api.routes.ruleRoutes
+import studio.tearule.api.routes.teaLotRoutes
 import studio.tearule.db.DatabaseFactory
+import studio.tearule.repository.RuleRepository
+import studio.tearule.repository.TeaLotRepository
 import studio.tearule.seed.InitialData
 
 fun main(args: Array<String>) {
@@ -48,5 +52,8 @@ fun Application.module() {
         get("/health") {
             call.respond(mapOf("status" to "ok"))
         }
+
+        ruleRoutes(RuleRepository())
+        teaLotRoutes(TeaLotRepository())
     }
 }
