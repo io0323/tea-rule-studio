@@ -12,11 +12,13 @@ import io.ktor.server.routing.routing
 import kotlinx.serialization.json.Json
 import io.ktor.serialization.kotlinx.json.json
 import studio.tearule.api.routes.ruleRoutes
+import studio.tearule.api.routes.simulationRoutes
 import studio.tearule.api.routes.teaLotRoutes
 import studio.tearule.db.DatabaseFactory
 import studio.tearule.repository.RuleRepository
 import studio.tearule.repository.TeaLotRepository
 import studio.tearule.seed.InitialData
+import studio.tearule.service.RuleEvaluationService
 
 fun main(args: Array<String>) {
     EngineMain.main(args)
@@ -49,11 +51,16 @@ fun Application.module() {
     }
 
     routing {
+        val ruleRepository = RuleRepository()
+        val teaLotRepository = TeaLotRepository()
+        val ruleEvaluationService = RuleEvaluationService(ruleRepository, teaLotRepository)
+
         get("/health") {
             call.respond(mapOf("status" to "ok"))
         }
 
-        ruleRoutes(RuleRepository())
-        teaLotRoutes(TeaLotRepository())
+        ruleRoutes(ruleRepository)
+        teaLotRoutes(teaLotRepository)
+        simulationRoutes(ruleEvaluationService)
     }
 }

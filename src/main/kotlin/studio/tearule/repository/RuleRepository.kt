@@ -2,6 +2,7 @@ package studio.tearule.repository
 
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.insertAndGetId
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import studio.tearule.api.dto.CreateRuleRequest
@@ -29,6 +30,14 @@ class RuleRepository {
     fun findAll(): List<RuleResponse> =
         transaction {
             Rules.selectAll().map(::toRuleResponse)
+        }
+
+    fun findById(id: Long): RuleResponse? =
+        transaction {
+            Rules.select { Rules.id eq id }
+                .limit(1)
+                .firstOrNull()
+                ?.let(::toRuleResponse)
         }
 
     private fun toRuleResponse(row: ResultRow): RuleResponse =

@@ -2,6 +2,8 @@ package studio.tearule.repository
 
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.insertAndGetId
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import studio.tearule.api.dto.CreateTeaLotRequest
 import studio.tearule.api.dto.TeaLotResponse
@@ -28,6 +30,19 @@ class TeaLotRepository {
                 pesticideLevel = request.pesticideLevel,
                 aromaScore = request.aromaScore,
             )
+        }
+
+    fun findAll(): List<TeaLotResponse> =
+        transaction {
+            TeaLots.selectAll().map(::toTeaLotResponse)
+        }
+
+    fun findById(id: Long): TeaLotResponse? =
+        transaction {
+            TeaLots.select { TeaLots.id eq id }
+                .limit(1)
+                .firstOrNull()
+                ?.let(::toTeaLotResponse)
         }
 
     private fun toTeaLotResponse(row: ResultRow): TeaLotResponse =
