@@ -7,8 +7,10 @@ import io.ktor.server.netty.EngineMain
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
+import io.ktor.server.http.content.staticResources
 import kotlinx.serialization.json.Json
 import io.ktor.serialization.kotlinx.json.json
 import studio.tearule.api.routes.ruleRoutes
@@ -54,6 +56,11 @@ fun Application.module() {
         val ruleRepository = RuleRepository()
         val teaLotRepository = TeaLotRepository()
         val ruleEvaluationService = RuleEvaluationService(ruleRepository, teaLotRepository)
+
+        staticResources("/static", "static")
+        get("/") {
+            call.respondRedirect("/static/index.html")
+        }
 
         get("/health") {
             call.respond(mapOf("status" to "ok"))
