@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>TeaRule Studio</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <h1>TeaRule Studio</h1>
+    <nav>
+      <button id="nav-rules">Rules</button>
+      <button id="nav-tea-lots">Tea Lots</button>
+      <button id="nav-simulation">Simulation</button>
+    </nav>
+  </header>
+
+  <main id="app">
+    <!-- Rules -->
+    <section id="rules-view" class="view hidden">
+      <h2>Rules</h2>
+      <form id="rule-form">
+        <input type="text" id="rule-name" placeholder="Rule name" required>
+        <select id="rule-severity">
+          <option value="INFO">INFO</option>
+          <option value="WARNING">WARNING</option>
+          <option value="BLOCK">BLOCK</option>
+        </select>
+        <textarea id="rule-dsl" placeholder="rule(\"...\") { whenMoisture { it > 9.0 } then BLOCK }" required></textarea>
+        <button type="submit">Add Rule</button>
+      </form>
+      <ul id="rules-list"></ul>
+    </section>
+
+    <!-- Tea Lots -->
+    <section id="tea-lots-view" class="view hidden">
+      <h2>Tea Lots</h2>
+      <form id="tea-lot-form">
+        <input type="text" id="lot-code" placeholder="Lot code" required>
+        <input type="text" id="origin" placeholder="Origin" required>
+        <input type="text" id="variety" placeholder="Variety" required>
+        <input type="number" step="0.1" id="moisture" placeholder="Moisture" required>
+        <input type="number" step="0.01" id="pesticide-level" placeholder="Pesticide level" required>
+        <input type="number" id="aroma-score" placeholder="Aroma score" required>
+        <button type="submit">Add Tea Lot</button>
+      </form>
+      <ul id="tea-lots-list"></ul>
+    </section>
+
+    <!-- Simulation -->
+    <section id="simulation-view" class="view hidden">
+      <h2>Simulation</h2>
+      <select id="sim-tea-lot-select">
+        <option value="">-- Select Tea Lot --</option>
+      </select>
+      <button id="run-simulation">Run Simulation</button>
+      <pre id="sim-result"></pre>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
