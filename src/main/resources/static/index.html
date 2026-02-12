@@ -15,6 +15,8 @@
     </nav>
   </header>
 
+  <div id="notification" class="notification hidden"></div>
+
   <main id="app">
     <!-- Rules -->
     <section id="rules-view" class="view hidden">
@@ -27,6 +29,11 @@
           <option value="BLOCK">BLOCK</option>
         </select>
         <textarea id="rule-dsl" placeholder="rule(\"...\") { whenMoisture { it > 9.0 } then BLOCK }" required></textarea>
+        <div class="dsl-samples">
+          <button type="button" id="sample-moisture">Sample: Moisture</button>
+          <button type="button" id="sample-pesticide">Sample: Pesticide</button>
+          <button type="button" id="sample-aroma">Sample: Aroma</button>
+        </div>
         <button type="submit">Add Rule</button>
       </form>
       <ul id="rules-list"></ul>
@@ -39,9 +46,10 @@
         <input type="text" id="lot-code" placeholder="Lot code" required>
         <input type="text" id="origin" placeholder="Origin" required>
         <input type="text" id="variety" placeholder="Variety" required>
-        <input type="number" step="0.1" id="moisture" placeholder="Moisture" required>
-        <input type="number" step="0.01" id="pesticide-level" placeholder="Pesticide level" required>
-        <input type="number" id="aroma-score" placeholder="Aroma score" required>
+        <input type="number" step="0.1" id="moisture" placeholder="Moisture (0-20)" required min="0" max="20">
+        <input type="number" step="0.01" id="pesticide-level" placeholder="Pesticide level (0-1)" required min="0" max="1">
+        <input type="number" id="aroma-score" placeholder="Aroma score (0-100)" required min="0" max="100">
+        <div id="tea-lot-error" class="error-message"></div>
         <button type="submit">Add Tea Lot</button>
       </form>
       <ul id="tea-lots-list"></ul>
