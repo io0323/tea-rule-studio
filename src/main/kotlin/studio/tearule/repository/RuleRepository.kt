@@ -1,6 +1,9 @@
 package studio.tearule.repository
 
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
+import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
@@ -38,6 +41,16 @@ class RuleRepository {
                 .limit(1)
                 .firstOrNull()
                 ?.let(::toRuleResponse)
+        }
+
+    fun deleteById(id: Long): Boolean =
+        transaction {
+            Rules.deleteWhere { Rules.id eq id } > 0
+        }
+
+    fun deleteByIds(ids: List<Long>): Int =
+        transaction {
+            Rules.deleteWhere { Rules.id inList ids }
         }
 
     private fun toRuleResponse(row: ResultRow): RuleResponse =

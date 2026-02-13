@@ -9,18 +9,34 @@
   <header>
     <h1>TeaRule Studio</h1>
     <nav>
-      <button id="nav-rules">Rules</button>
-      <button id="nav-tea-lots">Tea Lots</button>
-      <button id="nav-simulation">Simulation</button>
+      <button id="nav-rules" title="Rules (Ctrl+N)">Rules</button>
+      <button id="nav-tea-lots" title="Tea Lots (Ctrl+Shift+N)">Tea Lots</button>
+      <button id="nav-simulation" title="Simulation (Ctrl+S)">Simulation</button>
     </nav>
+    <div class="shortcuts-hint">
+      <small>Ctrl+N: New Rule | Ctrl+Shift+N: New Tea Lot | Ctrl+S: Simulation | Ctrl+/: Search</small>
+    </div>
   </header>
 
   <div id="notification" class="notification hidden"></div>
+  <div id="loading" class="loading hidden">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading...</div>
+  </div>
 
   <main id="app">
     <!-- Rules -->
     <section id="rules-view" class="view hidden">
       <h2>Rules</h2>
+      <div class="search-filter">
+        <input type="text" id="rule-search" placeholder="Search rules...">
+        <select id="rule-severity-filter">
+          <option value="">All Severities</option>
+          <option value="INFO">INFO</option>
+          <option value="WARNING">WARNING</option>
+          <option value="BLOCK">BLOCK</option>
+        </select>
+      </div>
       <form id="rule-form">
         <input type="text" id="rule-name" placeholder="Rule name" required>
         <select id="rule-severity">
@@ -36,12 +52,25 @@
         </div>
         <button type="submit">Add Rule</button>
       </form>
+      <div class="bulk-actions">
+        <button type="button" id="select-all-rules">Select All</button>
+        <button type="button" id="delete-selected-rules" class="danger">Delete Selected</button>
+      </div>
       <ul id="rules-list"></ul>
     </section>
 
     <!-- Tea Lots -->
     <section id="tea-lots-view" class="view hidden">
       <h2>Tea Lots</h2>
+      <div class="search-filter">
+        <input type="text" id="tea-lot-search" placeholder="Search tea lots...">
+        <select id="tea-lot-origin-filter">
+          <option value="">All Origins</option>
+        </select>
+        <select id="tea-lot-variety-filter">
+          <option value="">All Varieties</option>
+        </select>
+      </div>
       <form id="tea-lot-form">
         <input type="text" id="lot-code" placeholder="Lot code" required>
         <input type="text" id="origin" placeholder="Origin" required>
@@ -52,17 +81,30 @@
         <div id="tea-lot-error" class="error-message"></div>
         <button type="submit">Add Tea Lot</button>
       </form>
+      <div class="bulk-actions">
+        <button type="button" id="select-all-tea-lots">Select All</button>
+        <button type="button" id="delete-selected-tea-lots" class="danger">Delete Selected</button>
+      </div>
       <ul id="tea-lots-list"></ul>
     </section>
 
     <!-- Simulation -->
     <section id="simulation-view" class="view hidden">
       <h2>Simulation</h2>
-      <select id="sim-tea-lot-select">
-        <option value="">-- Select Tea Lot --</option>
-      </select>
-      <button id="run-simulation">Run Simulation</button>
-      <pre id="sim-result"></pre>
+      <div class="simulation-controls">
+        <div>
+          <label>
+            <input type="checkbox" id="sim-select-all"> Select All Tea Lots
+          </label>
+        </div>
+        <select id="sim-tea-lot-select" multiple size="5">
+        </select>
+        <div>
+          <button id="run-simulation">Run Simulation (Selected)</button>
+          <button id="run-bulk-simulation">Run Bulk Simulation</button>
+        </div>
+      </div>
+      <div id="sim-result"></div>
     </section>
   </main>
 

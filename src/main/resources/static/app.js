@@ -16,6 +16,17 @@ function showNotification(message, type = 'success') {
   }, 3000);
 }
 
+function showLoading(text = 'Loading...') {
+  const loading = document.getElementById('loading');
+  const loadingText = loading.querySelector('.loading-text');
+  loadingText.textContent = text;
+  loading.classList.remove('hidden');
+}
+
+function hideLoading() {
+  document.getElementById('loading').classList.add('hidden');
+}
+
 async function fetchJson(url, options = {}) {
   try {
     const res = await fetch(API_BASE + url, {
@@ -39,34 +50,112 @@ async function fetchJson(url, options = {}) {
   }
 }
 
+let allRules = [];
+let allTeaLots = [];
+
 async function loadRules() {
-  const rules = await fetchJson('/rules');
+  showLoading('Loading rules...');
+  allRules = await fetchJson('/rules');
+  renderRules();
+  hideLoading();
+}
+
+function renderRules() {
   const list = document.getElementById('rules-list');
+  const searchTerm = document.getElementById('rule-search').value.toLowerCase();
+  const severityFilter = document.getElementById('rule-severity-filter').value;
+  
+  const filtered = allRules.filter(r => {
+    const matchesSearch = r.name.toLowerCase().includes(searchTerm) || 
+                         r.dsl.toLowerCase().includes(searchTerm);
+    const matchesSeverity = !severityFilter || r.severity === severityFilter;
+    return matchesSearch && matchesSeverity;
+  });
+  
   list.innerHTML = '';
-  rules.forEach(r => {
+  filtered.forEach(r => {
     const li = document.createElement('li');
-    li.innerHTML = `<strong>${r.name}</strong> (${r.severity})<br><pre>${r.dsl}</pre>`;
+    li.className = 'rule-item';
+    li.innerHTML = `
+      <input type="checkbox" class="rule-checkbox" value="${r.id}">
+      <div>
+        <strong>${r.name}</strong> (${r.severity})<br>
+        <pre>${r.dsl}</pre>
+      </div>
+    `;
     list.appendChild(li);
   });
 }
 
 async function loadTeaLots() {
-  const lots = await fetchJson('/tea-lots');
+  showLoading('Loading tea lots...');
+  allTeaLots = await fetchJson('/tea-lots');
+  renderTeaLots();
+  populateSimulationSelect();
+  hideLoading();
+}
+
+function renderTeaLots() {
   const list = document.getElementById('tea-lots-list');
+  const searchTerm = document.getElementById('tea-lot-search').value.toLowerCase();
+  const originFilter = document.getElementById('tea-lot-origin-filter').value;
+  const varietyFilter = document.getElementById('tea-lot-variety-filter').value;
+  
+  const filtered = allTeaLots.filter(l => {
+    const matchesSearch = l.lotCode.toLowerCase().includes(searchTerm) || 
+                         l.origin.toLowerCase().includes(searchTerm) ||
+                         l.variety.toLowerCase().includes(searchTerm);
+    const matchesOrigin = !originFilter || l.origin === originFilter;
+    const matchesVariety = !varietyFilter || l.variety === varietyFilter;
+    return matchesSearch && matchesOrigin && matchesVariety;
+  });
+  
   list.innerHTML = '';
-  lots.forEach(l => {
+  filtered.forEach(l => {
     const li = document.createElement('li');
-    li.innerHTML = `<strong>${l.lotCode}</strong> – ${l.origin} / ${l.variety}<br>Moisture: ${l.moisture}, Pesticide: ${l.pesticideLevel}, Aroma: ${l.aromaScore}`;
+    li.className = 'tea-lot-item';
+    li.innerHTML = `
+      <input type="checkbox" class="tea-lot-checkbox" value="${l.id}">
+      <div>
+        <strong>${l.lotCode}</strong> – ${l.origin} / ${l.variety}<br>
+        Moisture: ${l.moisture}, Pesticide: ${l.pesticideLevel}, Aroma: ${l.aromaScore}
+      </div>
+    `;
     list.appendChild(li);
   });
-  // populate simulation select
+}
+
+function populateSimulationSelect() {
   const sel = document.getElementById('sim-tea-lot-select');
-  sel.innerHTML = '<option value="">-- Select Tea Lot --</option>';
-  lots.forEach(l => {
+  sel.innerHTML = '';
+  allTeaLots.forEach(l => {
     const opt = document.createElement('option');
     opt.value = l.id;
     opt.textContent = `${l.lotCode} (${l.origin})`;
     sel.appendChild(opt);
+  });
+  
+  // Update filter options
+  const originFilter = document.getElementById('tea-lot-origin-filter');
+  const varietyFilter = document.getElementById('tea-lot-variety-filter');
+  
+  const origins = [...new Set(allTeaLots.map(l => l.origin))].sort();
+  const varieties = [...new Set(allTeaLots.map(l => l.variety))].sort();
+  
+  originFilter.innerHTML = '<option value="">All Origins</option>';
+  origins.forEach(origin => {
+    const opt = document.createElement('option');
+    opt.value = origin;
+    opt.textContent = origin;
+    originFilter.appendChild(opt);
+  });
+  
+  varietyFilter.innerHTML = '<option value="">All Varieties</option>';
+  varieties.forEach(variety => {
+    const opt = document.createElement('option');
+    opt.value = variety;
+    opt.textContent = variety;
+    varietyFilter.appendChild(opt);
   });
 }
 
@@ -75,8 +164,13 @@ document.getElementById('nav-rules').addEventListener('click', () => {
   show('rules-view');
   loadRules();
 });
+
+// Search and filter for rules
+document.getElementById('rule-search').addEventListener('input', renderRules);
+document.getElementById('rule-severity-filter').addEventListener('change', renderRules);
 document.getElementById('rule-form').addEventListener('submit', async e => {
   e.preventDefault();
+  showLoading('Adding rule...');
   const payload = {
     name: document.getElementById('rule-name').value,
     severity: document.getElementById('rule-severity').value,
@@ -86,6 +180,7 @@ document.getElementById('rule-form').addEventListener('submit', async e => {
   e.target.reset();
   loadRules();
   showNotification('Rule added successfully');
+  hideLoading();
 });
 // DSL sample buttons
 document.getElementById('sample-moisture').addEventListener('click', () => {
@@ -104,11 +199,38 @@ document.getElementById('sample-aroma').addEventListener('click', () => {
   document.getElementById('rule-dsl').value = 'rule("Aroma Check") { whenAromaScore { it < 70 } then INFO }';
 });
 
+// Bulk actions for rules
+document.getElementById('select-all-rules').addEventListener('click', () => {
+  const checkboxes = document.querySelectorAll('.rule-checkbox');
+  const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+  checkboxes.forEach(cb => cb.checked = !allChecked);
+});
+
+document.getElementById('delete-selected-rules').addEventListener('click', async () => {
+  const selected = Array.from(document.querySelectorAll('.rule-checkbox:checked')).map(cb => cb.value);
+  if (selected.length === 0) {
+    showNotification('No rules selected', 'error');
+    return;
+  }
+  if (!confirm(`Delete ${selected.length} rule(s)?`)) return;
+  
+  showLoading('Deleting rules...');
+  await fetchJson('/rules', { method: 'DELETE', body: JSON.stringify(selected.map(Number)) });
+  loadRules();
+  showNotification(`Deleted ${selected.length} rule(s)`);
+  hideLoading();
+});
+
 // Tea Lots
 document.getElementById('nav-tea-lots').addEventListener('click', () => {
   show('tea-lots-view');
   loadTeaLots();
 });
+
+// Search and filter for tea lots
+document.getElementById('tea-lot-search').addEventListener('input', renderTeaLots);
+document.getElementById('tea-lot-origin-filter').addEventListener('change', renderTeaLots);
+document.getElementById('tea-lot-variety-filter').addEventListener('change', renderTeaLots);
 document.getElementById('tea-lot-form').addEventListener('submit', async e => {
   e.preventDefault();
   const errorEl = document.getElementById('tea-lot-error');
@@ -131,6 +253,7 @@ document.getElementById('tea-lot-form').addEventListener('submit', async e => {
     return;
   }
   
+  showLoading('Adding tea lot...');
   const payload = {
     lotCode: document.getElementById('lot-code').value,
     origin: document.getElementById('origin').value,
@@ -143,6 +266,29 @@ document.getElementById('tea-lot-form').addEventListener('submit', async e => {
   e.target.reset();
   loadTeaLots();
   showNotification('Tea Lot added successfully');
+  hideLoading();
+});
+
+// Bulk actions for tea lots
+document.getElementById('select-all-tea-lots').addEventListener('click', () => {
+  const checkboxes = document.querySelectorAll('.tea-lot-checkbox');
+  const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+  checkboxes.forEach(cb => cb.checked = !allChecked);
+});
+
+document.getElementById('delete-selected-tea-lots').addEventListener('click', async () => {
+  const selected = Array.from(document.querySelectorAll('.tea-lot-checkbox:checked')).map(cb => cb.value);
+  if (selected.length === 0) {
+    showNotification('No tea lots selected', 'error');
+    return;
+  }
+  if (!confirm(`Delete ${selected.length} tea lot(s)?`)) return;
+  
+  showLoading('Deleting tea lots...');
+  await fetchJson('/tea-lots', { method: 'DELETE', body: JSON.stringify(selected.map(Number)) });
+  loadTeaLots();
+  showNotification(`Deleted ${selected.length} tea lot(s)`);
+  hideLoading();
 });
 
 // Simulation
@@ -151,26 +297,111 @@ document.getElementById('nav-simulation').addEventListener('click', () => {
   loadTeaLots(); // ensure select is populated
 });
 document.getElementById('run-simulation').addEventListener('click', async () => {
-  const teaLotId = document.getElementById('sim-tea-lot-select').value;
-  if (!teaLotId) return;
-  const result = await fetchJson(`/simulate/${teaLotId}`, { method: 'POST' });
+  const sel = document.getElementById('sim-tea-lot-select');
+  const selectedOptions = Array.from(sel.selectedOptions);
+  if (selectedOptions.length === 0) {
+    showNotification('Please select tea lots', 'error');
+    return;
+  }
+  if (selectedOptions.length === 1) {
+    // Single simulation
+    const teaLotId = selectedOptions[0].value;
+    showLoading('Running simulation...');
+    const result = await fetchJson(`/simulate/${teaLotId}`, { method: 'POST' });
+    displaySimulationResult([result]);
+    hideLoading();
+  } else {
+    // Bulk simulation
+    const teaLotIds = selectedOptions.map(opt => opt.value);
+    showLoading('Running bulk simulation...');
+    const bulkResult = await fetchJson('/simulate', { method: 'POST', body: JSON.stringify({ teaLotIds: teaLotIds.map(Number) }) });
+    displaySimulationResult(bulkResult.results);
+    hideLoading();
+  }
+});
+
+document.getElementById('run-bulk-simulation').addEventListener('click', async () => {
+  const sel = document.getElementById('sim-tea-lot-select');
+  const allOptions = Array.from(sel.options);
+  if (allOptions.length === 0) {
+    showNotification('No tea lots available', 'error');
+    return;
+  }
+  const teaLotIds = allOptions.map(opt => opt.value);
+  showLoading('Running bulk simulation for all tea lots...');
+  const bulkResult = await fetchJson('/simulate', { method: 'POST', body: JSON.stringify({ teaLotIds: teaLotIds.map(Number) }) });
+  displaySimulationResult(bulkResult.results);
+  hideLoading();
+});
+
+document.getElementById('sim-select-all').addEventListener('change', (e) => {
+  const sel = document.getElementById('sim-tea-lot-select');
+  Array.from(sel.options).forEach(opt => opt.selected = e.target.checked);
+});
+
+function displaySimulationResult(results) {
   const resultEl = document.getElementById('sim-result');
+  let html = '';
   
-  let html = `<strong>TeaLot ID: ${result.teaLotId}</strong><br>`;
-  html += `<strong>Shippable: <span class="${result.shippable ? 'pass' : 'fail'}">${result.shippable ? 'YES' : 'NO'}</span></strong><br><br>`;
-  html += '<strong>Rule Results:</strong><br>';
-  
-  result.results.forEach(r => {
-    const cssClass = r.result === 'PASS' ? 'pass' : 'fail';
-    html += `<div class="rule-result">
-      <span class="${cssClass}">${r.result}</span> 
-      <span class="severity-${r.severity.toLowerCase()}">[${r.severity}]</span> 
-      ${r.message}
+  results.forEach((result, index) => {
+    html += `<div class="simulation-result-item">
+      <h4>TeaLot ID: ${result.teaLotId}</h4>
+      <p><strong>Shippable: <span class="${result.shippable ? 'pass' : 'fail'}">${result.shippable ? 'YES' : 'NO'}</span></strong></p>
+      <div class="rule-results">
+        ${result.results.map(r => `
+          <div class="rule-result">
+            <span class="${r.result === 'PASS' ? 'pass' : 'fail'}">${r.result}</span> 
+            <span class="severity-${r.severity.toLowerCase()}">[${r.severity}]</span> 
+            ${r.message}
+          </div>
+        `).join('')}
+      </div>
     </div>`;
   });
   
   resultEl.innerHTML = html;
-});
+}
 
 // Initial view
 show('rules-view');
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  // Ctrl/Cmd + N: New Rule
+  if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+    e.preventDefault();
+    show('rules-view');
+    document.getElementById('rule-name').focus();
+  }
+  // Ctrl/Cmd + Shift + N: New Tea Lot
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'N') {
+    e.preventDefault();
+    show('tea-lots-view');
+    document.getElementById('lot-code').focus();
+  }
+  // Ctrl/Cmd + S: Run Simulation
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    show('simulation-view');
+    loadTeaLots();
+  }
+  // Ctrl/Cmd + /: Focus search
+  if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+    e.preventDefault();
+    const currentView = document.querySelector('.view:not(.hidden)').id;
+    if (currentView === 'rules-view') {
+      document.getElementById('rule-search').focus();
+    } else if (currentView === 'tea-lots-view') {
+      document.getElementById('tea-lot-search').focus();
+    }
+  }
+  // Escape: Clear search/focus
+  if (e.key === 'Escape') {
+    const activeElement = document.activeElement;
+    if (activeElement && activeElement.id.includes('search')) {
+      activeElement.value = '';
+      activeElement.dispatchEvent(new Event('input'));
+      activeElement.blur();
+    }
+  }
+});

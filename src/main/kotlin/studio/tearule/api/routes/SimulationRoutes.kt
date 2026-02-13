@@ -2,10 +2,13 @@ package studio.tearule.api.routes
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
+import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
+import studio.tearule.api.dto.BulkSimulationRequest
+import studio.tearule.api.dto.BulkSimulationResponse
 import studio.tearule.service.RuleEvaluationService
 
 fun Route.simulationRoutes(ruleEvaluationService: RuleEvaluationService) {
@@ -21,6 +24,19 @@ fun Route.simulationRoutes(ruleEvaluationService: RuleEvaluationService) {
             }
 
             call.respond(response)
+        }
+
+        post {
+            val request = call.receive<BulkSimulationRequest>()
+            val results = request.teaLotIds.map { teaLotId ->
+                try {
+                    ruleEvaluationService.simulate(teaLotId)
+                } catch (e: IllegalStateException) {
+                    null
+                }
+            }.filterNotNull()
+            
+            call.respond(BulkSimulationResponse(results))
         }
     }
 }

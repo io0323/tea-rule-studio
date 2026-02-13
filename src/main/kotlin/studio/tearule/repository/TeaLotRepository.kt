@@ -1,6 +1,9 @@
 package studio.tearule.repository
 
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
+import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.select
@@ -43,6 +46,16 @@ class TeaLotRepository {
                 .limit(1)
                 .firstOrNull()
                 ?.let(::toTeaLotResponse)
+        }
+
+    fun deleteById(id: Long): Boolean =
+        transaction {
+            TeaLots.deleteWhere { TeaLots.id eq id } > 0
+        }
+
+    fun deleteByIds(ids: List<Long>): Int =
+        transaction {
+            TeaLots.deleteWhere { TeaLots.id inList ids }
         }
 
     private fun toTeaLotResponse(row: ResultRow): TeaLotResponse =
