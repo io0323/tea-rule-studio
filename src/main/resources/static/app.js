@@ -362,8 +362,109 @@ function displaySimulationResult(results) {
   resultEl.innerHTML = html;
 }
 
-// Initial view
-show('rules-view');
+// Data export/import
+document.getElementById('export-data').addEventListener('click', async () => {
+  showLoading('Exporting data...');
+  
+  try {
+    // Export rules
+    const rulesBlob = await fetchBlob('/export/rules');
+    downloadBlob(rulesBlob, 'rules.json');
+    
+    // Export tea lots
+    const teaLotsBlob = await fetchBlob('/export/tea-lots');
+    downloadBlob(teaLotsBlob, 'tea-lots.json');
+    
+    showNotification('Data exported successfully');
+  } catch (error) {
+    showNotification('Export failed: ' + error.message, 'error');
+  } finally {
+    hideLoading();
+  }
+});
+
+function fetchBlob(url) {
+  return fetch(url).then(response => {
+    if (!response.ok) throw new Error('Network response was not ok');
+    return response.blob();
+  });
+}
+
+document.getElementById('import-data').addEventListener('click', () => {
+  document.getElementById('import-file').click();
+});
+
+document.getElementById('import-file').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  if (!file.name.endsWith('.json')) {
+    showNotification('Please select a JSON file', 'error');
+    return;
+  }
+  
+  showLoading('Importing data...');
+  
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    
+    if (data.length > 0) {
+      // Determine data type based on structure
+      if (data[0].name && data[0].dsl && data[0].severity) {
+        // Rules data
+        await importRules(data);
+      } else if (data[0].lotCode && data[0].origin && data[0].variety) {
+        // Tea lots data
+        await importTeaLots(data);
+      } else {
+        throw new Error('Unknown data format');
+      }
+    } else {
+      showNotification('No data to import', 'error');
+    }
+  } catch (error) {
+    showNotification('Import failed: ' + error.message, 'error');
+  } finally {
+    hideLoading();
+    e.target.value = ''; // Reset file input
+  }
+});
+
+async function importRules(rules) {
+  const importData = rules.map(rule => ({
+    name: rule.name,
+    dsl: rule.dsl,
+    severity: rule.severity
+  }));
+  
+  const result = await fetchJson('/import/rules', { 
+    method: 'POST', 
+    body: JSON.stringify({ rules: importData }) 
+  });
+  
+  showNotification(`Imported ${result.imported} rules successfully`);
+  loadRules(); // Refresh rules list
+}
+
+async function importTeaLots(teaLots) {
+  const importData = teaLots.map(teaLot => ({
+    lotCode: teaLot.lotCode,
+    origin: teaLot.origin,
+    variety: teaLot.variety,
+    moisture: teaLot.moisture,
+    pesticideLevel: teaLot.pesticideLevel,
+    aromaScore: teaLot.aromaScore
+  }));
+  
+  const result = await fetchJson('/import/tea-lots', { 
+    method: 'POST', 
+    body: JSON.stringify({ teaLots: importData }) 
+  });
+  
+  showNotification(`Imported ${result.imported} tea lots successfully`);
+  loadTeaLots(); // Refresh tea lots list
+}
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
