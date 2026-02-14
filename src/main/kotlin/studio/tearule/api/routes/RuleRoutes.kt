@@ -10,35 +10,63 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import studio.tearule.api.dto.CreateRuleRequest
+import studio.tearule.api.dto.ImportRulesRequest
+import studio.tearule.api.dto.ImportRulesResponse
 import studio.tearule.repository.RuleRepository
 
 fun Route.ruleRoutes(ruleRepository: RuleRepository) {
     route("/rules") {
         get {
-            call.respond(ruleRepository.findAll())
+            val rules = ruleRepository.findAll()
+            call.respond(rules)
         }
+
         post {
             val request = call.receive<CreateRuleRequest>()
-            val created = ruleRepository.create(request)
-            call.respond(HttpStatusCode.Created, created)
+            val rule = ruleRepository.create(request)
+            call.respond(HttpStatusCode.Created, rule)
         }
-        delete("/{id}") {
-            val id = call.parameters["id"]?.toLongOrNull()
-            if (id == null) {
-                call.respond(HttpStatusCode.BadRequest, "Invalid rule ID")
-                return@delete
-            }
-            val deleted = ruleRepository.deleteById(id)
-            if (deleted) {
-                call.respond(HttpStatusCode.OK, mapOf("deleted" to true))
-            } else {
-                call.respond(HttpStatusCode.NotFound, mapOf("deleted" to false))
-            }
-        }
+
         delete {
             val ids = call.receive<List<Long>>()
             val count = ruleRepository.deleteByIds(ids)
-            call.respond(HttpStatusCode.OK, mapOf("deletedCount" to count))
+            call.respond(mapOf("deleted" to count))
         }
+
+        get("/{id}") {
+            val id = call.parameters["id"]?.toLongOrNull()
+                ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "invalid id"))
+
+            val rule = ruleRepository.findById(id)
+                ?: return@get call.respond(HttpStatusCode.NotFound, mapOf("error" to "rule not found"))
+
+            call.respond(rule)
+        }
+
+        delete("/{id}") {
+            val id = call.parameters["id"]?.toLongOrNull()
+                ?: return@delete call.respond(HttpStatusCode.BadRequest, mapOf("error" to "invalid id"))
+
+            val deleted = ruleRepository.deleteById(id)
+            if (deleted) {
+                call.respond(HttpStatusCode.NoContent)
+            } else {
+                call.respond(HttpStatusCode.NotFound, mapOf("error" to "rule not found"))
+            }
+        }
+    }
+
+    get("/export/rules") {
+        val rules = ruleRepository.findAll()
+        call.response.headers.append("Content-Disposition", "attachment; filename=\"rules.json\"")
+        call.response.headers.append("Content-Type", "application/json")
+        call.respond(rules)
+    }
+
+    post("/import/rules") {
+        val request = call.receive<ImportRulesRequest>()
+        val importedRules = request.rules.map { ruleRepository.create(it) }
+        val response = ImportRulesResponse(importedRules.size, importedRules)
+        call.respond(HttpStatusCode.Created, response)
     }
 }

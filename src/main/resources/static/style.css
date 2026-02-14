@@ -31,6 +31,17 @@ nav button.active {
   color: #fff;
   border-color: #007bff;
 }
+.data-management {
+  display: flex;
+  gap: 0.5rem;
+}
+.data-management button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
 .shortcuts-hint {
   margin-left: auto;
   color: #666;
