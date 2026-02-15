@@ -12,10 +12,14 @@ import studio.tearule.api.dto.CreateRuleRequest
 import studio.tearule.api.dto.RuleResponse
 import studio.tearule.db.tables.Rules
 import studio.tearule.domain.Severity
+import studio.tearule.rules.RuleDslParser
 
 class RuleRepository {
     fun create(request: CreateRuleRequest): RuleResponse =
         transaction {
+            // Validate DSL by parsing it
+            RuleDslParser.parse(request.dsl)
+
             val id = Rules.insertAndGetId {
                 it[name] = request.name
                 it[dsl] = request.dsl

@@ -15,6 +15,9 @@ import studio.tearule.db.tables.TeaLots
 class TeaLotRepository {
     fun create(request: CreateTeaLotRequest): TeaLotResponse =
         transaction {
+            // Validate input data
+            validateTeaLotRequest(request)
+
             val id = TeaLots.insertAndGetId {
                 it[lotCode] = request.lotCode
                 it[origin] = request.origin
@@ -58,14 +61,11 @@ class TeaLotRepository {
             TeaLots.deleteWhere { TeaLots.id inList ids }
         }
 
-    private fun toTeaLotResponse(row: ResultRow): TeaLotResponse =
-        TeaLotResponse(
-            id = row[TeaLots.id].value,
-            lotCode = row[TeaLots.lotCode],
-            origin = row[TeaLots.origin],
-            variety = row[TeaLots.variety],
-            moisture = row[TeaLots.moisture],
-            pesticideLevel = row[TeaLots.pesticideLevel],
-            aromaScore = row[TeaLots.aromaScore],
-        )
-}
+    private fun validateTeaLotRequest(request: CreateTeaLotRequest) {
+        require(request.lotCode.isNotBlank()) { "lotCode must not be blank" }
+        require(request.origin.isNotBlank()) { "origin must not be blank" }
+        require(request.variety.isNotBlank()) { "variety must not be blank" }
+        require(request.moisture in 0.0..100.0) { "moisture must be between 0.0 and 100.0" }
+        require(request.pesticideLevel in 0.0..100.0) { "pesticideLevel must be between 0.0 and 100.0" }
+        require(request.aromaScore in 1..10) { "aromaScore must be between 1 and 10" }
+    }

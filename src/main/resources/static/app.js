@@ -34,8 +34,15 @@ async function fetchJson(url, options = {}) {
       ...options,
     });
     if (!res.ok) {
-      const err = await res.text();
-      throw new Error(err || res.statusText);
+      let errorMessage = res.statusText;
+      try {
+        const errorData = await res.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch {
+        // Fallback to text if JSON parsing fails
+        errorMessage = await res.text() || errorMessage;
+      }
+      throw new Error(errorMessage);
     }
     return res.json();
   } catch (e) {
@@ -168,13 +175,31 @@ document.getElementById('nav-rules').addEventListener('click', () => {
 // Search and filter for rules
 document.getElementById('rule-search').addEventListener('input', renderRules);
 document.getElementById('rule-severity-filter').addEventListener('change', renderRules);
+// Real-time DSL validation
+document.getElementById('rule-dsl').addEventListener('input', () => {
+  const dsl = document.getElementById('rule-dsl').value;
+  const errorEl = document.getElementById('rule-error');
+  const dslError = validateDsl(dsl);
+  errorEl.textContent = dslError || '';
+});
 document.getElementById('rule-form').addEventListener('submit', async e => {
   e.preventDefault();
+  const dsl = document.getElementById('rule-dsl').value;
+  const errorEl = document.getElementById('rule-error');
+  errorEl.textContent = '';
+
+  // Validate DSL
+  const dslError = validateDsl(dsl);
+  if (dslError) {
+    errorEl.textContent = dslError;
+    return;
+  }
+
   showLoading('Adding rule...');
   const payload = {
     name: document.getElementById('rule-name').value,
     severity: document.getElementById('rule-severity').value,
-    dsl: document.getElementById('rule-dsl').value,
+    dsl: dsl,
   };
   await fetchJson('/rules', { method: 'POST', body: JSON.stringify(payload) });
   e.target.reset();
@@ -227,40 +252,44 @@ document.getElementById('nav-tea-lots').addEventListener('click', () => {
   loadTeaLots();
 });
 
+function validateTeaLotField(id, value) {
+  const num = parseFloat(value);
+  if (id === 'moisture') {
+    if (isNaN(num) || num < 0 || num > 100) return 'Moisture must be between 0 and 100';
+  } else if (id === 'pesticide-level') {
+    if (isNaN(num) || num < 0 || num > 100) return 'Pesticide level must be between 0 and 100';
+  } else if (id === 'aroma-score') {
+    const intVal = parseInt(value, 10);
+    if (isNaN(intVal) || intVal < 1 || intVal > 10) return 'Aroma score must be between 1 and 10';
+  }
+  return '';
+}
+
 // Search and filter for tea lots
 document.getElementById('tea-lot-search').addEventListener('input', renderTeaLots);
 document.getElementById('tea-lot-origin-filter').addEventListener('change', renderTeaLots);
 document.getElementById('tea-lot-variety-filter').addEventListener('change', renderTeaLots);
+// Real-time validation for tea lot fields
+['moisture', 'pesticide-level', 'aroma-score'].forEach(id => {
+  document.getElementById(id).addEventListener('input', (e) => {
+    const errorEl = document.getElementById('tea-lot-error');
+    const error = validateTeaLotField(id, e.target.value);
+    errorEl.textContent = error;
+  });
+});
 document.getElementById('tea-lot-form').addEventListener('submit', async e => {
   e.preventDefault();
   const errorEl = document.getElementById('tea-lot-error');
-  errorEl.textContent = '';
-  
-  const moisture = parseFloat(document.getElementById('moisture').value);
-  const pesticideLevel = parseFloat(document.getElementById('pesticide-level').value);
-  const aromaScore = parseInt(document.getElementById('aroma-score').value, 10);
-  
-  if (moisture < 0 || moisture > 20) {
-    errorEl.textContent = 'Moisture must be between 0 and 20';
-    return;
-  }
-  if (pesticideLevel < 0 || pesticideLevel > 1) {
-    errorEl.textContent = 'Pesticide level must be between 0 and 1';
-    return;
-  }
-  if (aromaScore < 0 || aromaScore > 100) {
-    errorEl.textContent = 'Aroma score must be between 0 and 100';
-    return;
-  }
+  if (errorEl.textContent) return; // Prevent submit if there's an error
   
   showLoading('Adding tea lot...');
   const payload = {
     lotCode: document.getElementById('lot-code').value,
     origin: document.getElementById('origin').value,
     variety: document.getElementById('variety').value,
-    moisture,
-    pesticideLevel,
-    aromaScore,
+    moisture: parseFloat(document.getElementById('moisture').value),
+    pesticideLevel: parseFloat(document.getElementById('pesticide-level').value),
+    aromaScore: parseInt(document.getElementById('aroma-score').value, 10),
   };
   await fetchJson('/tea-lots', { method: 'POST', body: JSON.stringify(payload) });
   e.target.reset();
@@ -466,37 +495,96 @@ async function importTeaLots(teaLots) {
   loadTeaLots(); // Refresh tea lots list
 }
 
-// Keyboard shortcuts
-document.addEventListener('keydown', (e) => {
-  // Ctrl/Cmd + N: New Rule
-  if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-    e.preventDefault();
-    show('rules-view');
-    document.getElementById('rule-name').focus();
+// DSL validation
+function validateDsl(dsl) {
+  const ruleNameRegex = /rule\("(.+?)"\)/;
+  const thenRegex = /then\s+(INFO|WARNING|BLOCK)/;
+
+  const nameMatch = ruleNameRegex.exec(dsl);
+  if (!nameMatch) {
+    return 'DSL parse error: missing rule("name")';
   }
-  // Ctrl/Cmd + Shift + N: New Tea Lot
-  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'N') {
-    e.preventDefault();
-    show('tea-lots-view');
-    document.getElementById('lot-code').focus();
+
+  const severityMatch = thenRegex.exec(dsl);
+  if (!severityMatch) {
+    return 'DSL parse error: missing then SEVERITY';
   }
-  // Ctrl/Cmd + S: Run Simulation
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-    e.preventDefault();
-    show('simulation-view');
-    loadTeaLots();
+
+  const severity = severityMatch[1];
+  if (!['INFO', 'WARNING', 'BLOCK'].includes(severity)) {
+    return 'DSL parse error: invalid severity';
   }
-  // Ctrl/Cmd + /: Focus search
-  if ((e.ctrlKey || e.metaKey) && e.key === '/') {
-    e.preventDefault();
-    const currentView = document.querySelector('.view:not(.hidden)').id;
-    if (currentView === 'rules-view') {
-      document.getElementById('rule-search').focus();
-    } else if (currentView === 'tea-lots-view') {
-      document.getElementById('tea-lot-search').focus();
-    }
+
+  if (dsl.includes('whenMoisture')) {
+    return validateDoublePredicate(dsl);
+  } else if (dsl.includes('whenPesticideLevel')) {
+    return validateDoublePredicate(dsl);
+  } else if (dsl.includes('whenAromaScore')) {
+    return validateIntPredicate(dsl);
+  } else {
+    return 'DSL parse error: unsupported condition';
   }
-  // Escape: Clear search/focus
+}
+
+function validateDoublePredicate(dsl) {
+  const braceStart = dsl.indexOf('{');
+  if (braceStart < 0) return 'DSL parse error: missing "{"';
+
+  const whenIndex = dsl.indexOf('when', 0);
+  if (whenIndex < 0) return 'DSL parse error: missing whenX';
+
+  const predicateStart = dsl.indexOf('{', whenIndex);
+  const predicateEnd = dsl.indexOf('}', predicateStart + 1);
+  if (predicateStart < 0 || predicateEnd < 0 || predicateEnd <= predicateStart) {
+    return 'DSL parse error: missing predicate block';
+  }
+
+  const predicate = dsl.substring(predicateStart + 1, predicateEnd).trim();
+  if (!predicate.startsWith('it')) return 'DSL parse error: predicate must start with "it"';
+
+  const body = predicate.substring(2);
+  const operators = ['>=', '<=', '>', '<'];
+  const op = operators.find(o => body.startsWith(o));
+  if (!op) return 'DSL parse error: missing comparison operator';
+
+  const numberStr = body.substring(op.length);
+  if (!numberStr.trim()) return 'DSL parse error: missing threshold';
+
+  const threshold = parseFloat(numberStr.trim());
+  if (isNaN(threshold)) return 'DSL parse error: threshold is not a number';
+
+  return null; // valid
+}
+
+function validateIntPredicate(dsl) {
+  const braceStart = dsl.indexOf('{');
+  if (braceStart < 0) return 'DSL parse error: missing "{"';
+
+  const whenIndex = dsl.indexOf('when', 0);
+  if (whenIndex < 0) return 'DSL parse error: missing whenX';
+
+  const predicateStart = dsl.indexOf('{', whenIndex);
+  const predicateEnd = dsl.indexOf('}', predicateStart + 1);
+  if (predicateStart < 0 || predicateEnd < 0 || predicateEnd <= predicateStart) {
+    return 'DSL parse error: missing predicate block';
+  }
+
+  const predicate = dsl.substring(predicateStart + 1, predicateEnd).trim();
+  if (!predicate.startsWith('it')) return 'DSL parse error: predicate must start with "it"';
+
+  const body = predicate.substring(2);
+  const operators = ['>=', '<=', '>', '<'];
+  const op = operators.find(o => body.startsWith(o));
+  if (!op) return 'DSL parse error: missing comparison operator';
+
+  const numberStr = body.substring(op.length);
+  if (!numberStr.trim()) return 'DSL parse error: missing threshold';
+
+  const threshold = parseInt(numberStr.trim(), 10);
+  if (isNaN(threshold)) return 'DSL parse error: threshold is not an integer';
+
+  return null; // valid
+}
   if (e.key === 'Escape') {
     const activeElement = document.activeElement;
     if (activeElement && activeElement.id.includes('search')) {
