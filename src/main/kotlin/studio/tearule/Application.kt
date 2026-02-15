@@ -42,11 +42,30 @@ fun Application.module() {
     }
 
     install(StatusPages) {
+        exception<IllegalArgumentException> { call, cause ->
+            call.respond(
+                status = io.ktor.http.HttpStatusCode.BadRequest,
+                message = mapOf(
+                    "message" to (cause.message ?: "Invalid request"),
+                    "status" to 400,
+                ),
+            )
+        }
+        exception<Exception> { call, cause ->
+            call.respond(
+                status = io.ktor.http.HttpStatusCode.InternalServerError,
+                message = mapOf(
+                    "message" to (cause.message ?: "Internal server error"),
+                    "status" to 500,
+                ),
+            )
+        }
         exception<Throwable> { call, cause ->
             call.respond(
                 status = io.ktor.http.HttpStatusCode.InternalServerError,
                 message = mapOf(
-                    "error" to (cause.message ?: "unexpected error"),
+                    "message" to "Unexpected error",
+                    "status" to 500,
                 ),
             )
         }
