@@ -6,6 +6,8 @@ import io.ktor.server.application.install
 import io.ktor.server.netty.EngineMain
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.plugins.openapi.*
+import io.ktor.server.plugins.swagger.*
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.get
@@ -68,6 +70,22 @@ fun Application.module() {
                     "status" to 500,
                 ),
             )
+        }
+    }
+
+    install(OpenAPI) {
+        info(
+            title = "Tea Rule Studio API",
+            version = "1.0.0",
+            description = "API for managing tea rules and lots"
+        )
+        server("http://localhost:8080")
+    }
+
+    install(SwaggerUI) {
+        swagger {
+            url = "/openapi.json"
+            forwardRoot = true
         }
     }
 

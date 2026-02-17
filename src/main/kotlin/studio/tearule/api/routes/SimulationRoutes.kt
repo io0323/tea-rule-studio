@@ -7,6 +7,7 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
+import io.ktor.server.plugins.openapi.*
 import studio.tearule.api.dto.BulkSimulationRequest
 import studio.tearule.api.dto.BulkSimulationResponse
 import studio.tearule.service.RuleEvaluationService
@@ -24,6 +25,27 @@ fun Route.simulationRoutes(ruleEvaluationService: RuleEvaluationService) {
             }
 
             call.respond(response)
+        } openapi {
+            summary = "Simulate rules for a single tea lot"
+            description = "Run all rules against a specific tea lot and return evaluation results"
+            operationId = "simulateTeaLot"
+            parameters {
+                pathParameter<Long>("teaLotId") {
+                    description = "ID of the tea lot to simulate"
+                }
+            }
+            response {
+                HttpStatusCode.OK to {
+                    description = "Simulation results"
+                    body<studio.tearule.api.dto.SimulationResponse>()
+                }
+                HttpStatusCode.NotFound to {
+                    description = "Tea lot not found or no rules available"
+                }
+                HttpStatusCode.BadRequest to {
+                    description = "Invalid tea lot ID"
+                }
+            }
         }
 
         post {
@@ -37,6 +59,20 @@ fun Route.simulationRoutes(ruleEvaluationService: RuleEvaluationService) {
             }.filterNotNull()
             
             call.respond(BulkSimulationResponse(results))
+        } openapi {
+            summary = "Simulate rules for multiple tea lots"
+            description = "Run all rules against multiple tea lots and return evaluation results for each"
+            operationId = "bulkSimulateTeaLots"
+            requestBody {
+                description = "List of tea lot IDs to simulate"
+                body<BulkSimulationRequest>()
+            }
+            response {
+                HttpStatusCode.OK to {
+                    description = "Bulk simulation results"
+                    body<BulkSimulationResponse>()
+                }
+            }
         }
     }
 }
