@@ -6,6 +6,7 @@ import io.ktor.server.application.install
 import io.ktor.server.netty.EngineMain
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.openapi.*
 import io.ktor.server.plugins.swagger.*
 import io.ktor.server.response.respond
@@ -41,6 +42,21 @@ fun Application.module() {
                 explicitNulls = false
             },
         )
+    }
+
+    install(CallLogging) {
+        level = org.slf4j.event.Level.INFO
+        filter { call -> call.request.path().startsWith("/") }
+        format { call ->
+            val status = call.response.status()
+            val httpMethod = call.request.httpMethod.value
+            val path = call.request.path()
+            val query = call.request.queryString()
+            val userAgent = call.request.headers["User-Agent"]
+            val remoteHost = call.request.origin.remoteHost
+            
+            "HTTP $httpMethod $path$query - $status - User-Agent: $userAgent - Remote: $remoteHost"
+        }
     }
 
     install(StatusPages) {
