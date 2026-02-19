@@ -19,6 +19,7 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:2.3.12")
     implementation("io.ktor:ktor-server-status-pages-jvm:2.3.12")
     implementation("io.ktor:ktor-server-call-logging-jvm:2.3.12")
+    implementation("io.ktor:ktor-server-cors-jvm:2.3.12")
     implementation("io.ktor:ktor-server-openapi-jvm:2.3.12")
     implementation("io.ktor:ktor-server-swagger-jvm:2.3.12")
     implementation("org.jetbrains.exposed:exposed-core:0.53.0")

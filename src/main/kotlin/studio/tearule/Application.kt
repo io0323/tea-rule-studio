@@ -7,6 +7,7 @@ import io.ktor.server.netty.EngineMain
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.plugins.calllogging.CallLogging
+import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.plugins.openapi.*
 import io.ktor.server.plugins.swagger.*
 import io.ktor.server.response.respond
@@ -24,6 +25,7 @@ import studio.tearule.repository.RuleRepository
 import studio.tearule.repository.TeaLotRepository
 import studio.tearule.seed.InitialData
 import studio.tearule.service.RuleEvaluationService
+import studio.tearule.middleware.RateLimitMiddleware
 
 fun main(args: Array<String>) {
     // Set port from environment variable if available
@@ -47,6 +49,21 @@ fun Application.module() {
                 explicitNulls = false
             },
         )
+    }
+
+    install(CORS) {
+        allowHost("localhost:8080")
+        allowHost("127.0.0.1:8080")
+        allowHost("localhost:3000") // For development frontend
+        allowHost("127.0.0.1:3000") // For development frontend
+        allowMethod(io.ktor.http.HttpMethod.Options)
+        allowMethod(io.ktor.http.HttpMethod.Get)
+        allowMethod(io.ktor.http.HttpMethod.Post)
+        allowMethod(io.ktor.http.HttpMethod.Put)
+        allowMethod(io.ktor.http.HttpMethod.Delete)
+        allowHeader(io.ktor.http.HttpHeaders.ContentType)
+        allowHeader(io.ktor.http.HttpHeaders.Authorization)
+        allowCredentials = true
     }
 
     install(CallLogging) {
@@ -114,6 +131,12 @@ fun Application.module() {
         val ruleRepository = RuleRepository()
         val teaLotRepository = TeaLotRepository()
         val ruleEvaluationService = RuleEvaluationService(ruleRepository, teaLotRepository)
+        val rateLimitMiddleware = RateLimitMiddleware()
+
+        // Apply rate limiting to all routes
+        intercept(ApplicationCallPipeline.Call) {
+            rateLimitMiddleware.intercept(this)
+        }
 
         staticResources("/static", "static")
         get("/") {
