@@ -2,6 +2,7 @@ plugins {
     kotlin("jvm") version "2.0.21"
     kotlin("plugin.serialization") version "2.0.21"
     application
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = "studio.tearule"
@@ -23,6 +24,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-core:0.53.0")
     implementation("org.jetbrains.exposed:exposed-dao:0.53.0")
     implementation("org.jetbrains.exposed:exposed-jdbc:0.53.0")
+    implementation("org.postgresql:postgresql:42.7.3")
     implementation("com.h2database:h2:2.3.232")
 
     implementation("ch.qos.logback:logback-classic:1.5.6")

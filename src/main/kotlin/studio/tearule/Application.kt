@@ -26,6 +26,11 @@ import studio.tearule.seed.InitialData
 import studio.tearule.service.RuleEvaluationService
 
 fun main(args: Array<String>) {
+    // Set port from environment variable if available
+    System.getenv("PORT")?.toIntOrNull()?.let { port ->
+        System.setProperty("ktor.deployment.port", port.toString())
+    }
+
     EngineMain.main(args)
 }
 
