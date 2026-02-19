@@ -4,7 +4,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.ApplicationCallPipeline
 import io.ktor.server.application.call
-import io.ktor.server.request.origin
 import io.ktor.server.response.respond
 import io.ktor.util.pipeline.PipelineContext
 import kotlinx.coroutines.sync.Mutex
@@ -80,7 +79,7 @@ class RateLimitMiddleware(
     }
 
     private fun getClientKey(call: ApplicationCall): String {
-        // Use client IP as key, or could use user ID if authenticated
-        return call.request.origin.remoteHost ?: "unknown"
+        // Use client IP as key
+        return call.request.local.remoteHost ?: "unknown"
     }
 }

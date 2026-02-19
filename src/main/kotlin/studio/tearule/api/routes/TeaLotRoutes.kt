@@ -176,7 +176,6 @@ fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
             }
             HttpStatusCode.BadRequest to {
                 description = "Invalid request data or validation errors"
-                body<Map<String, String>>()
             }
         }
     }
