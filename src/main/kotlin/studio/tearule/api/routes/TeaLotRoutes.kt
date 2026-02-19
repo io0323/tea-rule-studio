@@ -171,11 +171,11 @@ fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
         }
         response {
             HttpStatusCode.Created to {
-                description("Import result with created tea lots")
+                description = "Import result with created tea lots"
                 body<ImportTeaLotsResponse>()
             }
             HttpStatusCode.BadRequest to {
-                description("Invalid request data or validation errors")
+                description = "Invalid request data or validation errors"
                 body<Map<String, String>>()
             }
         }
