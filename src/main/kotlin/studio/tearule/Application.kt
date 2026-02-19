@@ -7,6 +7,7 @@ import io.ktor.server.netty.EngineMain
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.plugins.calllogging.CallLogging
+import io.ktor.server.plugins.calllogging.Level
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.plugins.openapi.*
 import io.ktor.server.plugins.swagger.*
@@ -67,8 +68,8 @@ fun Application.module() {
     }
 
     install(CallLogging) {
-        level = org.slf4j.event.Level.INFO
-        filter { call -> call.request.path().startsWith("/") }
+        level = Level.INFO
+        filter { it.request.path().startsWith("/") }
         format { call ->
             val status = call.response.status()
             val httpMethod = call.request.httpMethod.value
