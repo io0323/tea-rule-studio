@@ -26,7 +26,7 @@ fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
             operationId = "getAllTeaLots"
             response {
                 HttpStatusCode.OK to {
-                    description = "List of tea lots"
+                    description("List of tea lots")
                     body<List<studio.tearule.api.dto.TeaLotResponse>>()
                 }
             }
@@ -41,16 +41,16 @@ fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
             description = "Create a new tea lot with data validation"
             operationId = "createTeaLot"
             requestBody {
-                description = "Tea lot creation request"
+                description("Tea lot creation request")
                 body<CreateTeaLotRequest>()
             }
             response {
                 HttpStatusCode.Created to {
-                    description = "Created tea lot"
+                    description("Created tea lot")
                     body<studio.tearule.api.dto.TeaLotResponse>()
                 }
                 HttpStatusCode.BadRequest to {
-                    description = "Invalid request data or validation errors"
+                    description("Invalid request data or validation errors")
                 }
             }
         }
@@ -64,12 +64,12 @@ fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
             description = "Delete multiple tea lots by their IDs"
             operationId = "deleteMultipleTeaLots"
             requestBody {
-                description = "List of tea lot IDs to delete"
+                description("List of tea lot IDs to delete")
                 body<List<Long>>()
             }
             response {
                 HttpStatusCode.OK to {
-                    description = "Number of deleted tea lots"
+                    description("Number of deleted tea lots")
                     body<Map<String, Int>>()
                 }
             }
@@ -89,19 +89,19 @@ fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
             operationId = "getTeaLotById"
             parameters {
                 pathParameter<Long>("id") {
-                    description = "Tea lot ID"
+                    description("Tea lot ID")
                 }
             }
             response {
                 HttpStatusCode.OK to {
-                    description = "Tea lot details"
+                    description("Tea lot details")
                     body<studio.tearule.api.dto.TeaLotResponse>()
                 }
                 HttpStatusCode.NotFound to {
-                    description = "Tea lot not found"
+                    description("Tea lot not found")
                 }
                 HttpStatusCode.BadRequest to {
-                    description = "Invalid ID format"
+                    description("Invalid ID format")
                 }
             }
         }
@@ -122,18 +122,18 @@ fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
             operationId = "deleteTeaLotById"
             parameters {
                 pathParameter<Long>("id") {
-                    description = "Tea lot ID"
+                    description("Tea lot ID")
                 }
             }
             response {
                 HttpStatusCode.NoContent to {
-                    description = "Tea lot deleted successfully"
+                    description("Tea lot deleted successfully")
                 }
                 HttpStatusCode.NotFound to {
-                    description = "Tea lot not found"
+                    description("Tea lot not found")
                 }
                 HttpStatusCode.BadRequest to {
-                    description = "Invalid ID format"
+                    description("Invalid ID format")
                 }
             }
         }
@@ -150,7 +150,7 @@ fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
         operationId = "exportTeaLots"
         response {
             HttpStatusCode.OK to {
-                description = "JSON file containing all tea lots"
+                description("JSON file containing all tea lots")
                 body<List<studio.tearule.api.dto.TeaLotResponse>>()
             }
         }
