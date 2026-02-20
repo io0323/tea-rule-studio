@@ -13,15 +13,20 @@ repositories {
 }
 
 dependencies {
-    implementation("io.ktor:ktor-server-core-jvm:2.3.12")
-    implementation("io.ktor:ktor-server-netty-jvm:2.3.12")
-    implementation("io.ktor:ktor-server-content-negotiation-jvm:2.3.12")
-    implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:2.3.12")
-    implementation("io.ktor:ktor-server-status-pages-jvm:2.3.12")
-    implementation("io.ktor:ktor-server-call-logging-jvm:2.3.12")
-    implementation("io.ktor:ktor-server-cors-jvm:2.3.12")
-    implementation("io.ktor:ktor-server-openapi-jvm:2.3.12")
-    implementation("io.ktor:ktor-server-swagger-jvm:2.3.12")
+    implementation(platform("io.ktor:ktor-bom:3.0.3")) // pick a stable 3.x
+
+    implementation("io.ktor:ktor-server-core-jvm")
+    implementation("io.ktor:ktor-server-netty-jvm")
+    implementation("io.ktor:ktor-server-content-negotiation-jvm")
+    implementation("io.ktor:ktor-serialization-kotlinx-json-jvm")
+    implementation("io.ktor:ktor-server-status-pages-jvm")
+    implementation("io.ktor:ktor-server-call-logging-jvm")
+    implementation("io.ktor:ktor-server-cors-jvm")
+
+    // OpenAPI/Swagger (Ktor 3)
+    implementation("io.ktor:ktor-server-openapi")
+    implementation("io.ktor:ktor-server-swagger")
+
     implementation("org.jetbrains.exposed:exposed-core:0.53.0")
     implementation("org.jetbrains.exposed:exposed-dao:0.53.0")
     implementation("org.jetbrains.exposed:exposed-jdbc:0.53.0")
@@ -32,7 +37,7 @@ dependencies {
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 
     testImplementation(kotlin("test"))
-    testImplementation("io.ktor:ktor-server-test-host-jvm:2.3.12")
+    testImplementation("io.ktor:ktor-server-test-host-jvm")
 }
 
 kotlin {

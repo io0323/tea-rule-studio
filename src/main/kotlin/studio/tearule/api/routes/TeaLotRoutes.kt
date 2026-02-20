@@ -161,22 +161,5 @@ fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
         val importedTeaLots = request.teaLots.map { teaLotRepository.create(it) }
         val response = ImportTeaLotsResponse(importedTeaLots.size, importedTeaLots)
         call.respond(HttpStatusCode.Created, response)
-    } openapi {
-        summary = "Import tea lots"
-        description = "Import multiple tea lots from a JSON payload"
-        operationId = "importTeaLots"
-        requestBody {
-            description = "Tea lots to import"
-            body<ImportTeaLotsRequest>()
-        }
-        response {
-            HttpStatusCode.Created to {
-                description = "Import result with created tea lots"
-                body<ImportTeaLotsResponse>()
-            }
-            HttpStatusCode.BadRequest to {
-                description = "Invalid request data or validation errors"
-            }
-        }
     }
 }

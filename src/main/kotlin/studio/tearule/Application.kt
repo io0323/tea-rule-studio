@@ -121,13 +121,6 @@ fun Application.module() {
         server("http://localhost:8080")
     }
 
-    install(SwaggerUI) {
-        swagger {
-            url = "/openapi.json"
-            forwardRoot = true
-        }
-    }
-
     routing {
         val ruleRepository = RuleRepository()
         val teaLotRepository = TeaLotRepository()
@@ -138,6 +131,12 @@ fun Application.module() {
         intercept(ApplicationCallPipeline.Call) {
             rateLimitMiddleware.intercept(this)
         }
+
+        // Serves the OpenAPI spec from resources at: src/main/resources/openapi/documentation.yaml
+        openAPI(path = "openapi", swaggerFile = "openapi/documentation.yaml")
+
+        // Serves Swagger UI at /swagger, pointing to /openapi
+        swaggerUI(path = "swagger", swaggerFile = "openapi/documentation.yaml")
 
         staticResources("/static", "static")
         get("/") {
