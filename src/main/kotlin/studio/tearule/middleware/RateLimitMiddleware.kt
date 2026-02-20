@@ -37,8 +37,7 @@ class TokenBucket(
     private fun refill() {
         val now = System.currentTimeMillis()
         val timePassed = (now - lastRefillTime) / 1000.0 // seconds
-        val tokensToAdd = timePassed * refillRate
-        tokens = minOf(capacity, tokens + tokensToAdd)
+        tokens = (tokens + timePassed * refillRate).coerceAtMost(capacity)
         lastRefillTime = now
     }
 
@@ -56,7 +55,7 @@ class RateLimitMiddleware(
     private val refillRate = requestsPerMinute / 60.0 // tokens per second
     private val capacity = burstCapacity.toDouble()
 
-    suspend fun intercept(context: PipelineContext<Unit, ApplicationCall>) {
+    suspend fun intercept(context: PipelineContext<Unit, PipelineCall>) {
         val call = context.call
         val clientKey = getClientKey(call)
 
@@ -78,7 +77,7 @@ class RateLimitMiddleware(
         context.proceed()
     }
 
-    private fun getClientKey(call: ApplicationCall): String {
+    private fun getClientKey(call: PipelineCall): String {
         // Use client IP as key
         return call.request.local.remoteHost ?: "unknown"
     }
