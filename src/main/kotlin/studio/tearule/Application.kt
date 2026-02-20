@@ -74,7 +74,7 @@ fun Application.module() {
             val path = call.request.path()
             val query = call.request.queryString()
             val userAgent = call.request.headers["User-Agent"]
-            val remoteHost = call.request.origin.remoteHost
+            val remoteHost = call.request.local.remoteHost
             
             "HTTP $httpMethod $path$query - $status - User-Agent: $userAgent - Remote: $remoteHost"
         }
