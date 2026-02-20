@@ -148,11 +148,9 @@ fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
         summary = "Export all tea lots"
         description = "Download all tea lots as a JSON file"
         operationId = "exportTeaLots"
-        response {
-            HttpStatusCode.OK to { r: OpenApiResponse ->
-                r.description = "JSON file containing all tea lots"
-                r.body<List<studio.tearule.api.dto.TeaLotResponse>>()
-            }
+        response(HttpStatusCode.OK) {
+            description = "JSON file containing all tea lots"
+            body<List<studio.tearule.api.dto.TeaLotResponse>>()
         }
     }
 
