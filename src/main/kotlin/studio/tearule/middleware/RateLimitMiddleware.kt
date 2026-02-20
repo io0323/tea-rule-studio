@@ -6,6 +6,7 @@ import io.ktor.server.application.ApplicationCallPipeline
 import io.ktor.server.application.call
 import io.ktor.server.response.respond
 import io.ktor.util.pipeline.PipelineContext
+import io.ktor.server.plugins.origin
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentHashMap
@@ -55,7 +56,7 @@ class RateLimitMiddleware(
     private val refillRate = requestsPerMinute / 60.0 // tokens per second
     private val capacity = burstCapacity.toDouble()
 
-    suspend fun intercept(context: PipelineContext<Unit, PipelineCall>) {
+    suspend fun intercept(context: PipelineContext<Unit, ApplicationCall>) {
         val call = context.call
         val clientKey = getClientKey(call)
 
@@ -77,8 +78,9 @@ class RateLimitMiddleware(
         context.proceed()
     }
 
-    private fun getClientKey(call: PipelineCall): String {
-        // Use client IP as key
-        return call.request.local.remoteHost ?: "unknown"
+    private fun getClientKey(call: ApplicationCall): String {
+        // Prefer X-Forwarded-For when behind a proxy; fall back to origin remoteHost
+        return call.request.headers["X-Forwarded-For"]?.substringBefore(",")?.trim()
+            ?: call.request.origin.remoteHost
     }
 }
