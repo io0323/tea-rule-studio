@@ -14,6 +14,7 @@ import studio.tearule.api.dto.ImportTeaLotsRequest
 import studio.tearule.api.dto.ImportTeaLotsResponse
 import studio.tearule.repository.TeaLotRepository
 import studio.tearule.api.validation.ValidationUtils
+import studio.tearule.api.validation.ValidationResult
 
 fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
     route("/tea-lots") {

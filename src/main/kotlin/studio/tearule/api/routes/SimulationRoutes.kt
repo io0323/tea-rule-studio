@@ -11,6 +11,7 @@ import studio.tearule.api.dto.BulkSimulationRequest
 import studio.tearule.api.dto.BulkSimulationResponse
 import studio.tearule.service.RuleEvaluationService
 import studio.tearule.api.validation.ValidationUtils
+import studio.tearule.api.validation.ValidationResult
 
 fun Route.simulationRoutes(ruleEvaluationService: RuleEvaluationService) {
     route("/simulate") {
