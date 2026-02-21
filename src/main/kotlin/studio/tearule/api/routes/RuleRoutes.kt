@@ -26,7 +26,7 @@ fun Route.ruleRoutes(ruleRepository: RuleRepository) {
         post {
             val request = call.receive<CreateRuleRequest>()
             val validationResult = ValidationUtils.validateCreateRuleRequest(request)
-            if (validationResult is ValidationUtils.ValidationResult.Invalid) {
+            if (validationResult is ValidationResult.Invalid) {
                 return@post call.respond(HttpStatusCode.BadRequest, mapOf(
                     "error" to "Validation failed",
                     "details" to validationResult.errors
@@ -75,7 +75,7 @@ fun Route.ruleRoutes(ruleRepository: RuleRepository) {
     post("/import/rules") {
         val request = call.receive<ImportRulesRequest>()
         val validationResult = ValidationUtils.validateImportRulesRequest(request)
-        if (validationResult is ValidationUtils.ValidationResult.Invalid) {
+        if (validationResult is ValidationResult.Invalid) {
             return@post call.respond(HttpStatusCode.BadRequest, mapOf(
                 "error" to "Validation failed",
                 "details" to validationResult.errors
