@@ -13,6 +13,7 @@ import studio.tearule.api.dto.CreateRuleRequest
 import studio.tearule.api.dto.ImportRulesRequest
 import studio.tearule.api.dto.ImportRulesResponse
 import studio.tearule.repository.RuleRepository
+import studio.tearule.api.validation.ValidationUtils
 
 fun Route.ruleRoutes(ruleRepository: RuleRepository) {
     route("/rules") {
@@ -23,6 +24,13 @@ fun Route.ruleRoutes(ruleRepository: RuleRepository) {
 
         post {
             val request = call.receive<CreateRuleRequest>()
+            val validationResult = ValidationUtils.validateCreateRuleRequest(request)
+            if (validationResult is ValidationUtils.ValidationResult.Invalid) {
+                return@post call.respond(HttpStatusCode.BadRequest, mapOf(
+                    "error" to "Validation failed",
+                    "details" to validationResult.errors
+                ))
+            }
             val rule = ruleRepository.create(request)
             call.respond(HttpStatusCode.Created, rule)
         }
@@ -65,6 +73,13 @@ fun Route.ruleRoutes(ruleRepository: RuleRepository) {
 
     post("/import/rules") {
         val request = call.receive<ImportRulesRequest>()
+        val validationResult = ValidationUtils.validateImportRulesRequest(request)
+        if (validationResult is ValidationUtils.ValidationResult.Invalid) {
+            return@post call.respond(HttpStatusCode.BadRequest, mapOf(
+                "error" to "Validation failed",
+                "details" to validationResult.errors
+            ))
+        }
         val importedRules = request.rules.map { ruleRepository.create(it) }
         val response = ImportRulesResponse(importedRules.size, importedRules)
         call.respond(HttpStatusCode.Created, response)

@@ -13,6 +13,7 @@ import studio.tearule.api.dto.CreateTeaLotRequest
 import studio.tearule.api.dto.ImportTeaLotsRequest
 import studio.tearule.api.dto.ImportTeaLotsResponse
 import studio.tearule.repository.TeaLotRepository
+import studio.tearule.api.validation.ValidationUtils
 
 fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
     route("/tea-lots") {
@@ -23,6 +24,13 @@ fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
 
         post {
             val request = call.receive<CreateTeaLotRequest>()
+            val validationResult = ValidationUtils.validateCreateTeaLotRequest(request)
+            if (validationResult is ValidationUtils.ValidationResult.Invalid) {
+                return@post call.respond(HttpStatusCode.BadRequest, mapOf(
+                    "error" to "Validation failed",
+                    "details" to validationResult.errors
+                ))
+            }
             val teaLot = teaLotRepository.create(request)
             call.respond(HttpStatusCode.Created, teaLot)
         }
@@ -65,6 +73,13 @@ fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
 
     post("/import/tea-lots") {
         val request = call.receive<ImportTeaLotsRequest>()
+        val validationResult = ValidationUtils.validateImportTeaLotsRequest(request)
+        if (validationResult is ValidationUtils.ValidationResult.Invalid) {
+            return@post call.respond(HttpStatusCode.BadRequest, mapOf(
+                "error" to "Validation failed",
+                "details" to validationResult.errors
+            ))
+        }
         val importedTeaLots = request.teaLots.map { teaLotRepository.create(it) }
         val response = ImportTeaLotsResponse(importedTeaLots.size, importedTeaLots)
         call.respond(HttpStatusCode.Created, response)
