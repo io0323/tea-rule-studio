@@ -31,7 +31,7 @@ fun Route.simulationRoutes(ruleEvaluationService: RuleEvaluationService) {
         post {
             val request = call.receive<BulkSimulationRequest>()
             val validationResult = ValidationUtils.validateBulkSimulationRequest(request)
-            if (validationResult is ValidationUtils.ValidationResult.Invalid) {
+            if (validationResult is ValidationResult.Invalid) {
                 return@post call.respond(HttpStatusCode.BadRequest, mapOf(
                     "error" to "Validation failed",
                     "details" to validationResult.errors

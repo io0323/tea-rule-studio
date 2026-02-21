@@ -26,7 +26,7 @@ fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
         post {
             val request = call.receive<CreateTeaLotRequest>()
             val validationResult = ValidationUtils.validateCreateTeaLotRequest(request)
-            if (validationResult is ValidationUtils.ValidationResult.Invalid) {
+            if (validationResult is ValidationResult.Invalid) {
                 return@post call.respond(HttpStatusCode.BadRequest, mapOf(
                     "error" to "Validation failed",
                     "details" to validationResult.errors
@@ -75,7 +75,7 @@ fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
     post("/import/tea-lots") {
         val request = call.receive<ImportTeaLotsRequest>()
         val validationResult = ValidationUtils.validateImportTeaLotsRequest(request)
-        if (validationResult is ValidationUtils.ValidationResult.Invalid) {
+        if (validationResult is ValidationResult.Invalid) {
             return@post call.respond(HttpStatusCode.BadRequest, mapOf(
                 "error" to "Validation failed",
                 "details" to validationResult.errors
