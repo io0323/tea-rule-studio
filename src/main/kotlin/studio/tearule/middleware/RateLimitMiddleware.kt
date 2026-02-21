@@ -3,6 +3,7 @@ package studio.tearule.middleware
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.ApplicationCallPipeline
+import io.ktor.server.application.PipelineCall
 import io.ktor.server.application.call
 import io.ktor.server.response.respond
 import io.ktor.util.pipeline.PipelineContext
@@ -56,7 +57,7 @@ class RateLimitMiddleware(
     private val refillRate = requestsPerMinute / 60.0 // tokens per second
     private val capacity = burstCapacity.toDouble()
 
-    suspend fun intercept(context: PipelineContext<Unit, io.ktor.server.application.PipelineCall>) {
+    suspend fun intercept(context: PipelineContext<Unit, PipelineCall>) {
         val call = context.call
         val clientKey = getClientKey(call)
 
@@ -78,7 +79,7 @@ class RateLimitMiddleware(
         context.proceed()
     }
 
-    private fun getClientKey(call: io.ktor.server.application.PipelineCall): String {
+    private fun getClientKey(call: PipelineCall): String {
         // Prefer X-Forwarded-For when behind a proxy; fall back to origin remoteHost
         return call.request.headers["X-Forwarded-For"]?.substringBefore(",")?.trim()
             ?: call.request.origin.remoteHost
