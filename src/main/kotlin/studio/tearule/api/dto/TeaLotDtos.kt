@@ -22,3 +22,13 @@ data class TeaLotResponse(
     val pesticideLevel: Double,
     val aromaScore: Int,
 )
+
+@Serializable
+data class UpdateTeaLotRequest(
+    val lotCode: String? = null,
+    val origin: String? = null,
+    val variety: String? = null,
+    val moisture: Double? = null,
+    val pesticideLevel: Double? = null,
+    val aromaScore: Int? = null,
+)
