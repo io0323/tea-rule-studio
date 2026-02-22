@@ -4,11 +4,11 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
+import io.ktor.http.HttpMethod
 import io.ktor.server.routing.Route
-import io.ktor.server.routing.delete
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import io.ktor.server.routing.route
+import io.ktor.server.routing.put
+import io.ktor.server.routing.method
+import studio.tearule.api.dto.UpdateRuleRequest
 import studio.tearule.api.dto.CreateRuleRequest
 import studio.tearule.api.dto.ImportRulesRequest
 import studio.tearule.api.dto.ImportRulesResponse
@@ -51,17 +51,36 @@ fun Route.ruleRoutes(ruleRepository: RuleRepository) {
 
             call.respond(rule)
         }
+    }
 
-        delete("/{id}") {
-            val id = call.parameters["id"]?.toLongOrNull()
-                ?: return@delete call.respond(HttpStatusCode.BadRequest, mapOf("error" to "invalid id"))
+    method(HttpMethod.Put, "/rules/{id}") {
+        val id = call.parameters["id"]?.toLongOrNull()
+            ?: return@method call.respond(HttpStatusCode.BadRequest, mapOf("error" to "invalid id"))
 
-            val deleted = ruleRepository.deleteById(id)
-            if (deleted) {
-                call.respond(HttpStatusCode.NoContent)
-            } else {
-                call.respond(HttpStatusCode.NotFound, mapOf("error" to "rule not found"))
-            }
+        val request = call.receive<UpdateRuleRequest>()
+        val validationResult = ValidationUtils.validateUpdateRuleRequest(request)
+        if (validationResult is ValidationResult.Invalid) {
+            return@method call.respond(HttpStatusCode.BadRequest, mapOf(
+                "error" to "Validation failed",
+                "details" to validationResult.errors
+            ))
+        }
+
+        val updatedRule = ruleRepository.update(id, request)
+            ?: return@method call.respond(HttpStatusCode.NotFound, mapOf("error" to "rule not found"))
+
+        call.respond(updatedRule)
+    }
+
+    delete("/rules/{id}") {
+        val id = call.parameters["id"]?.toLongOrNull()
+            ?: return@delete call.respond(HttpStatusCode.BadRequest, mapOf("error" to "invalid id"))
+
+        val deleted = ruleRepository.deleteById(id)
+        if (deleted) {
+            call.respond(HttpStatusCode.NoContent)
+        } else {
+            call.respond(HttpStatusCode.NotFound, mapOf("error" to "rule not found"))
         }
     }
 

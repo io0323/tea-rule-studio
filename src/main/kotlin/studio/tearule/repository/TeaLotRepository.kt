@@ -8,8 +8,10 @@ import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 import studio.tearule.api.dto.CreateTeaLotRequest
 import studio.tearule.api.dto.TeaLotResponse
+import studio.tearule.api.dto.UpdateTeaLotRequest
 import studio.tearule.db.tables.TeaLots
 
 class TeaLotRepository {
@@ -56,9 +58,25 @@ class TeaLotRepository {
             TeaLots.deleteWhere { TeaLots.id eq id } > 0
         }
 
-    fun deleteByIds(ids: List<Long>): Int =
+    fun update(id: Long, request: UpdateTeaLotRequest): TeaLotResponse? =
         transaction {
-            TeaLots.deleteWhere { TeaLots.id inList ids }
+            // Validate input data for provided fields
+            validateUpdateTeaLotRequest(request)
+
+            val updatedRows = TeaLots.update({ TeaLots.id eq id }) { update ->
+                request.lotCode?.let { update[lotCode] = it }
+                request.origin?.let { update[origin] = it }
+                request.variety?.let { update[variety] = it }
+                request.moisture?.let { update[moisture] = it }
+                request.pesticideLevel?.let { update[pesticideLevel] = it }
+                request.aromaScore?.let { update[aromaScore] = it }
+            }
+
+            if (updatedRows > 0) {
+                findById(id)
+            } else {
+                null
+            }
         }
 
     private fun validateTeaLotRequest(request: CreateTeaLotRequest) {
@@ -68,6 +86,27 @@ class TeaLotRepository {
         require(request.moisture in 0.0..100.0) { "moisture must be between 0.0 and 100.0" }
         require(request.pesticideLevel in 0.0..100.0) { "pesticideLevel must be between 0.0 and 100.0" }
         require(request.aromaScore in 1..10) { "aromaScore must be between 1 and 10" }
+    }
+
+    private fun validateUpdateTeaLotRequest(request: UpdateTeaLotRequest) {
+        request.lotCode?.let {
+            require(it.isNotBlank()) { "lotCode must not be blank" }
+        }
+        request.origin?.let {
+            require(it.isNotBlank()) { "origin must not be blank" }
+        }
+        request.variety?.let {
+            require(it.isNotBlank()) { "variety must not be blank" }
+        }
+        request.moisture?.let {
+            require(it in 0.0..100.0) { "moisture must be between 0.0 and 100.0" }
+        }
+        request.pesticideLevel?.let {
+            require(it in 0.0..100.0) { "pesticideLevel must be between 0.0 and 100.0" }
+        }
+        request.aromaScore?.let {
+            require(it in 1..10) { "aromaScore must be between 1 and 10" }
+        }
     }
 
     private fun toTeaLotResponse(row: ResultRow): TeaLotResponse = TeaLotResponse(

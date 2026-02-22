@@ -100,6 +100,68 @@ object ValidationUtils {
 
         return if (errors.isEmpty()) ValidationResult.Valid else ValidationResult.Invalid(errors)
     }
+
+    fun validateUpdateTeaLotRequest(request: UpdateTeaLotRequest): ValidationResult {
+        val errors = mutableListOf<String>()
+
+        request.lotCode?.let {
+            if (it.isBlank()) {
+                errors.add("lotCode cannot be blank")
+            }
+        }
+
+        request.origin?.let {
+            if (it.isBlank()) {
+                errors.add("origin cannot be blank")
+            }
+        }
+
+        request.variety?.let {
+            if (it.isBlank()) {
+                errors.add("variety cannot be blank")
+            }
+        }
+
+        request.moisture?.let {
+            if (it < 0.0 || it > 100.0) {
+                errors.add("moisture must be between 0.0 and 100.0")
+            }
+        }
+
+        request.pesticideLevel?.let {
+            if (it < 0.0) {
+                errors.add("pesticideLevel cannot be negative")
+            }
+        }
+
+        request.aromaScore?.let {
+            if (it < 0 || it > 100) {
+                errors.add("aromaScore must be between 0 and 100")
+            }
+        }
+
+        return if (errors.isEmpty()) ValidationResult.Valid else ValidationResult.Invalid(errors)
+    }
+
+    fun validateUpdateRuleRequest(request: UpdateRuleRequest): ValidationResult {
+        val errors = mutableListOf<String>()
+
+        request.name?.let {
+            if (it.isBlank()) {
+                errors.add("name cannot be blank")
+            }
+        }
+
+        request.dsl?.let {
+            if (it.isBlank()) {
+                errors.add("dsl cannot be blank")
+            }
+        }
+
+        // Note: severity is an enum, so it's automatically validated by serialization
+
+        return if (errors.isEmpty()) ValidationResult.Valid else ValidationResult.Invalid(errors)
+    }
 }
 
 sealed class ValidationResult {
