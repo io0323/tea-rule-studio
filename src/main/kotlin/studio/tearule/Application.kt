@@ -2,16 +2,16 @@ package studio.tearule
 
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.netty.EngineMain
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
-import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondRedirect
-import io.ktor.routing.get
-import io.ktor.routing.routing
+import io.ktor.server.routing.get
+import io.ktor.server.routing.routing
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.http.content.staticResources
@@ -65,21 +65,6 @@ fun Application.module() {
         allowHeader(io.ktor.http.HttpHeaders.ContentType)
         allowHeader(io.ktor.http.HttpHeaders.Authorization)
         allowCredentials = true
-    }
-
-    install(CallLogging) {
-        level = org.slf4j.event.Level.INFO
-        filter { call -> call.request.path().startsWith("/") }
-        format { call ->
-            val status = call.response.status()
-            val httpMethod = call.request.httpMethod.value
-            val path = call.request.path()
-            val query = call.request.queryString()
-            val userAgent = call.request.headers["User-Agent"]
-            val remoteHost = call.request.local.remoteHost
-            
-            "HTTP $httpMethod $path$query - $status - User-Agent: $userAgent - Remote: $remoteHost"
-        }
     }
 
     install(StatusPages) {
