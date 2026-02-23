@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test
 import studio.tearule.api.dto.CreateRuleRequest
 import studio.tearule.api.dto.UpdateRuleRequest
 import studio.tearule.db.tables.Rules
+import studio.tearule.domain.Severity
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -33,20 +34,20 @@ class RuleRepositoryTest {
     @Test
     fun `create should insert and return RuleResponse`() {
         val repo = RuleRepository()
-        val request = CreateRuleRequest("Rule1", "some dsl", 5)
+        val request = CreateRuleRequest("Rule1", "some dsl", Severity.MEDIUM)
         val result = repo.create(request)
         assertNotNull(result)
         assertEquals("Rule1", result.name)
         assertEquals("some dsl", result.dsl)
-        assertEquals(5, result.severity)
+        assertEquals(Severity.MEDIUM, result.severity)
         assertNotNull(result.id)
     }
 
     @Test
     fun `findAll should return all rules`() {
         val repo = RuleRepository()
-        val request1 = CreateRuleRequest("Rule1", "dsl1", 5)
-        val request2 = CreateRuleRequest("Rule2", "dsl2", 3)
+        val request1 = CreateRuleRequest("Rule1", "dsl1", Severity.MEDIUM)
+        val request2 = CreateRuleRequest("Rule2", "dsl2", Severity.LOW)
         repo.create(request1)
         repo.create(request2)
         val results = repo.findAll()
@@ -58,7 +59,7 @@ class RuleRepositoryTest {
     @Test
     fun `findById should return rule if exists`() {
         val repo = RuleRepository()
-        val request = CreateRuleRequest("Rule1", "dsl", 5)
+        val request = CreateRuleRequest("Rule1", "dsl", Severity.MEDIUM)
         val created = repo.create(request)
         val found = repo.findById(created.id)
         assertNotNull(found)
@@ -76,15 +77,15 @@ class RuleRepositoryTest {
     @Test
     fun `update should modify existing rule`() {
         val repo = RuleRepository()
-        val request = CreateRuleRequest("Rule1", "dsl", 5)
+        val request = CreateRuleRequest("Rule1", "dsl", Severity.MEDIUM)
         val created = repo.create(request)
-        val updateRequest = UpdateRuleRequest(name = "Rule1_updated", severity = 10)
+        val updateRequest = UpdateRuleRequest(name = "Rule1_updated", severity = Severity.HIGH)
         val updated = repo.update(created.id, updateRequest)
         assertNotNull(updated)
         assertEquals(created.id, updated.id)
         assertEquals("Rule1_updated", updated.name)
         assertEquals("dsl", updated.dsl) // unchanged
-        assertEquals(10, updated.severity)
+        assertEquals(Severity.HIGH, updated.severity)
     }
 
     @Test
@@ -98,7 +99,7 @@ class RuleRepositoryTest {
     @Test
     fun `deleteById should return true if deleted`() {
         val repo = RuleRepository()
-        val request = CreateRuleRequest("Rule1", "dsl", 5)
+        val request = CreateRuleRequest("Rule1", "dsl", Severity.MEDIUM)
         val created = repo.create(request)
         val deleted = repo.deleteById(created.id)
         assertEquals(true, deleted)
@@ -116,8 +117,8 @@ class RuleRepositoryTest {
     @Test
     fun `deleteByIds should delete multiple rules`() {
         val repo = RuleRepository()
-        val request1 = CreateRuleRequest("Rule1", "dsl1", 5)
-        val request2 = CreateRuleRequest("Rule2", "dsl2", 3)
+        val request1 = CreateRuleRequest("Rule1", "dsl1", Severity.MEDIUM)
+        val request2 = CreateRuleRequest("Rule2", "dsl2", Severity.LOW)
         val created1 = repo.create(request1)
         val created2 = repo.create(request2)
         val count = repo.deleteByIds(listOf(created1.id, created2.id))
