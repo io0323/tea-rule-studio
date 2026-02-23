@@ -13,19 +13,17 @@ repositories {
 }
 
 dependencies {
-    implementation(platform("io.ktor:ktor-bom:2.3.12"))
+    implementation("io.ktor:ktor-server-core-jvm:2.3.12")
+    implementation("io.ktor:ktor-server-netty-jvm:2.3.12")
+    implementation("io.ktor:ktor-server-content-negotiation-jvm:2.3.12")
+    implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:2.3.12")
+    implementation("io.ktor:ktor-server-status-pages-jvm:2.3.12")
+    implementation("io.ktor:ktor-server-call-logging-jvm:2.3.12")
+    implementation("io.ktor:ktor-server-cors-jvm:2.3.12")
 
-    implementation("io.ktor:ktor-server-core-jvm")
-    implementation("io.ktor:ktor-server-netty-jvm")
-    implementation("io.ktor:ktor-server-content-negotiation-jvm")
-    implementation("io.ktor:ktor-serialization-kotlinx-json-jvm")
-    implementation("io.ktor:ktor-server-status-pages-jvm")
-    implementation("io.ktor:ktor-server-call-logging-jvm")
-    implementation("io.ktor:ktor-server-cors-jvm")
-
-    // OpenAPI/Swagger (Ktor 3)
-    implementation("io.ktor:ktor-server-openapi")
-    implementation("io.ktor:ktor-server-swagger")
+    // OpenAPI/Swagger (Ktor 2.x)
+    implementation("io.ktor:ktor-server-openapi-jvm:2.3.12")
+    implementation("io.ktor:ktor-server-swagger-jvm:2.3.12")
 
     implementation("org.jetbrains.exposed:exposed-core:0.53.0")
     implementation("org.jetbrains.exposed:exposed-dao:0.53.0")
