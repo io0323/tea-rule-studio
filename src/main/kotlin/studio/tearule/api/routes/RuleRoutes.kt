@@ -6,7 +6,11 @@ import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.http.HttpMethod
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.route
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
 import io.ktor.server.routing.put
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.method
 import studio.tearule.api.dto.UpdateRuleRequest
 import studio.tearule.api.dto.CreateRuleRequest
@@ -53,21 +57,21 @@ fun Route.ruleRoutes(ruleRepository: RuleRepository) {
         }
     }
 
-    method(HttpMethod.Put, "/rules/{id}") {
+    put("/rules/{id}") {
         val id = call.parameters["id"]?.toLongOrNull()
-            ?: return@method call.respond(HttpStatusCode.BadRequest, mapOf("error" to "invalid id"))
+            ?: return@put call.respond(HttpStatusCode.BadRequest, mapOf("error" to "invalid id"))
 
         val request = call.receive<UpdateRuleRequest>()
         val validationResult = ValidationUtils.validateUpdateRuleRequest(request)
         if (validationResult is ValidationResult.Invalid) {
-            return@method call.respond(HttpStatusCode.BadRequest, mapOf(
+            return@put call.respond(HttpStatusCode.BadRequest, mapOf(
                 "error" to "Validation failed",
                 "details" to validationResult.errors
             ))
         }
 
         val updatedRule = ruleRepository.update(id, request)
-            ?: return@method call.respond(HttpStatusCode.NotFound, mapOf("error" to "rule not found"))
+            ?: return@put call.respond(HttpStatusCode.NotFound, mapOf("error" to "rule not found"))
 
         call.respond(updatedRule)
     }

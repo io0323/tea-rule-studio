@@ -58,6 +58,11 @@ class TeaLotRepository {
             TeaLots.deleteWhere { TeaLots.id eq id } > 0
         }
 
+    fun deleteByIds(ids: List<Long>): Int =
+        transaction {
+            TeaLots.deleteWhere { TeaLots.id inList ids }
+        }
+
     fun update(id: Long, request: UpdateTeaLotRequest): TeaLotResponse? =
         transaction {
             // Validate input data for provided fields

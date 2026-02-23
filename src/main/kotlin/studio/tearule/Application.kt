@@ -1,7 +1,7 @@
 package studio.tearule
 
 import io.ktor.server.application.Application
-import io.ktor.server.application.call
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.install
 import io.ktor.server.netty.EngineMain
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
@@ -10,8 +10,10 @@ import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondRedirect
-import io.ktor.server.routing.get
-import io.ktor.server.routing.routing
+import io.ktor.routing.get
+import io.ktor.routing.routing
+import io.ktor.server.request.*
+import io.ktor.server.response.*
 import io.ktor.server.http.content.staticResources
 import io.ktor.server.request.*
 import kotlinx.serialization.json.Json
@@ -67,7 +69,7 @@ fun Application.module() {
 
     install(CallLogging) {
         level = org.slf4j.event.Level.INFO
-        filter { it.request.path().startsWith("/") }
+        filter { call -> call.request.path().startsWith("/") }
         format { call ->
             val status = call.response.status()
             val httpMethod = call.request.httpMethod.value
