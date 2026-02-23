@@ -13,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    implementation(platform("io.ktor:ktor-bom:3.0.3")) // pick a stable 3.x
+    implementation(platform("io.ktor:ktor-bom:2.3.12"))
 
     implementation("io.ktor:ktor-server-core-jvm")
     implementation("io.ktor:ktor-server-netty-jvm")
