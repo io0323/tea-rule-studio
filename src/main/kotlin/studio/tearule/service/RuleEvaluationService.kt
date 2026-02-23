@@ -47,7 +47,7 @@ class RuleEvaluationService(
             }
         }
 
-        val hasBlockFail = results.any { it.result == "FAIL" && it.severity == Severity.BLOCK }
+        val hasBlockFail = results.any { it.result == "FAIL" && it.severity == Severity.HIGH }
 
         return SimulationResponse(
             teaLotId = teaLotId,
