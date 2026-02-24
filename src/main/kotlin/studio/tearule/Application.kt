@@ -7,6 +7,7 @@ import io.ktor.server.application.install
 import io.ktor.server.netty.EngineMain
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
+import org.jetbrains.exposed.exceptions.ExposedSQLException
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondRedirect
@@ -74,6 +75,15 @@ fun Application.module() {
                 message = mapOf(
                     "message" to (cause.message ?: "Invalid request"),
                     "status" to 400,
+                ),
+            )
+        }
+        exception<ExposedSQLException> { call, cause ->
+            call.respond(
+                status = io.ktor.http.HttpStatusCode.InternalServerError,
+                message = mapOf(
+                    "message" to "Database error",
+                    "status" to 500,
                 ),
             )
         }
