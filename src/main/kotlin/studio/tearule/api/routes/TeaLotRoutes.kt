@@ -62,12 +62,11 @@ fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
             ?: return@put call.respond(HttpStatusCode.BadRequest, mapOf("error" to "invalid id"))
 
         val request = call.receive<UpdateTeaLotRequest>()
-        val validationResult = ValidationUtils.validateUpdateTeaLotRequest(request)
-        if (validationResult is ValidationResult.Invalid) {
-            return@put call.respond(HttpStatusCode.BadRequest, mapOf(
-                "error" to "Validation failed",
-                "details" to validationResult.errors
-            ))
+        ValidationUtils.validateUpdateTeaLotRequest(request).let { result ->
+            when (result) {
+                is ValidationResult.Invalid -> throw IllegalArgumentException("Validation failed: ${result.errors.joinToString()}")
+                is ValidationResult.Valid -> {}
+            }
         }
 
         val updatedTeaLot = teaLotRepository.update(id, request)
