@@ -10,6 +10,8 @@ import io.ktor.server.routing.route
 import studio.tearule.api.dto.BulkSimulationRequest
 import studio.tearule.api.dto.BulkSimulationResponse
 import studio.tearule.service.RuleEvaluationService
+import studio.tearule.api.validation.ValidationUtils
+import studio.tearule.api.validation.ValidationResult
 
 fun Route.simulationRoutes(ruleEvaluationService: RuleEvaluationService) {
     route("/simulate") {
@@ -28,6 +30,13 @@ fun Route.simulationRoutes(ruleEvaluationService: RuleEvaluationService) {
 
         post {
             val request = call.receive<BulkSimulationRequest>()
+            val validationResult = ValidationUtils.validateBulkSimulationRequest(request)
+            if (validationResult is ValidationResult.Invalid) {
+                return@post call.respond(HttpStatusCode.BadRequest, mapOf(
+                    "error" to "Validation failed",
+                    "details" to validationResult.errors
+                ))
+            }
             val results = request.teaLotIds.map { teaLotId ->
                 try {
                     ruleEvaluationService.simulate(teaLotId)

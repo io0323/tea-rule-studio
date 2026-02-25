@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- JSON structured logging for application logs -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <fieldNames>
+                <timestamp>timestamp</timestamp>
+                <message>message</message>
+                <logger>logger</logger>
+                <level>level</level>
+                <thread>thread</thread>
+                <mdc>mdc</mdc>
+            </fieldNames>
+            <includeCallerInfo>true</includeCallerInfo>
+        </encoder>
+    </appender>
+
+    <!-- Plain text logging for errors and warnings to console -->
+    <appender name="ERROR_STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>WARN</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <!-- File appender for all logs -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/tea-rule-studio.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/tea-rule-studio.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeCallerInfo>true</includeCallerInfo>
+        </encoder>
+    </appender>
+
+    <!-- Async appender for performance -->
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="FILE" />
+        <queueSize>512</queueSize>
+        <discardingThreshold>20</discardingThreshold>
+    </appender>
+
+    <!-- Root logger -->
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="ERROR_STDOUT" />
+        <appender-ref ref="ASYNC_FILE" />
+    </root>
+
+    <!-- Application specific loggers -->
+    <logger name="studio.tearule" level="DEBUG" />
+    <logger name="io.ktor" level="INFO" />
+    <logger name="org.jetbrains.exposed" level="INFO" />
+
+    <!-- Suppress noisy loggers -->
+    <logger name="org.eclipse.jetty" level="WARN" />
+    <logger name="io.netty" level="WARN" />
+</configuration>

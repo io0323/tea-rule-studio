@@ -1,6 +1,7 @@
 package studio.tearule.service
 
 import studio.tearule.api.dto.RuleResultDto
+import studio.tearule.api.dto.RuleResponse
 import studio.tearule.api.dto.SimulationResponse
 import studio.tearule.domain.Severity
 import studio.tearule.repository.RuleRepository
@@ -23,30 +24,30 @@ class RuleEvaluationService(
             aromaScore = teaLot.aromaScore,
         )
 
-        val results = ruleRepository.findAll().map { rule ->
-            val compiled = RuleDslParser.parse(rule.dsl)
+        val results: List<RuleResultDto> = (ruleRepository.findAll() as List<RuleResponse>).map { ruleResponse: RuleResponse ->
+            val compiled = RuleDslParser.parse(ruleResponse.dsl)
             val evaluation = compiled.evaluate(snapshot)
 
             when (evaluation) {
                 is RuleEvaluation.Pass ->
                     RuleResultDto(
-                        ruleId = rule.id,
+                        ruleId = ruleResponse.id,
                         result = "PASS",
-                        severity = rule.severity,
-                        message = "${rule.name}: pass",
+                        severity = ruleResponse.severity,
+                        message = "${ruleResponse.name}: pass",
                     )
 
                 is RuleEvaluation.Fail ->
                     RuleResultDto(
-                        ruleId = rule.id,
+                        ruleId = ruleResponse.id,
                         result = "FAIL",
-                        severity = rule.severity,
-                        message = "${rule.name}: ${evaluation.message}",
+                        severity = ruleResponse.severity,
+                        message = "${ruleResponse.name}: ${evaluation.message}",
                     )
             }
         }
 
-        val hasBlockFail = results.any { it.result == "FAIL" && it.severity == Severity.BLOCK }
+        val hasBlockFail = results.any { it.result == "FAIL" && it.severity == Severity.HIGH }
 
         return SimulationResponse(
             teaLotId = teaLotId,

@@ -11,10 +11,11 @@ import java.sql.Connection
 
 object DatabaseFactory {
     fun init(config: ApplicationConfig) {
-        val url = config.property("database.url").getString()
-        val driver = config.property("database.driver").getString()
-        val user = config.property("database.user").getString()
-        val password = config.property("database.password").getString()
+        // Use environment variables if available, otherwise fallback to config
+        val url = System.getenv("DATABASE_URL") ?: config.property("database.url").getString()
+        val driver = System.getenv("DATABASE_DRIVER") ?: config.property("database.driver").getString()
+        val user = System.getenv("DATABASE_USER") ?: config.property("database.user").getString()
+        val password = System.getenv("DATABASE_PASSWORD") ?: config.property("database.password").getString()
 
         Database.connect(
             url = url,

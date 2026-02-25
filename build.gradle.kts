@@ -2,6 +2,7 @@ plugins {
     kotlin("jvm") version "2.0.21"
     kotlin("plugin.serialization") version "2.0.21"
     application
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = "studio.tearule"
@@ -17,17 +18,25 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation-jvm:2.3.12")
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:2.3.12")
     implementation("io.ktor:ktor-server-status-pages-jvm:2.3.12")
+    implementation("io.ktor:ktor-server-call-logging-jvm:2.3.12")
+    implementation("io.ktor:ktor-server-cors-jvm:2.3.12")
+
+    // OpenAPI/Swagger (Ktor 2.x)
     implementation("io.ktor:ktor-server-openapi-jvm:2.3.12")
     implementation("io.ktor:ktor-server-swagger-jvm:2.3.12")
+
     implementation("org.jetbrains.exposed:exposed-core:0.53.0")
     implementation("org.jetbrains.exposed:exposed-dao:0.53.0")
     implementation("org.jetbrains.exposed:exposed-jdbc:0.53.0")
+    implementation("org.postgresql:postgresql:42.7.3")
     implementation("com.h2database:h2:2.3.232")
 
     implementation("ch.qos.logback:logback-classic:1.5.6")
+    implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 
     testImplementation(kotlin("test"))
     testImplementation("io.ktor:ktor-server-test-host-jvm:2.3.12")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
 }
 
 kotlin {

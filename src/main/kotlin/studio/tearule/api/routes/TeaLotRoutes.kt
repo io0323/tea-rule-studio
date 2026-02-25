@@ -4,17 +4,21 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
+import io.ktor.http.HttpMethod
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
+import io.ktor.server.routing.method
 import io.ktor.server.routing.post
+import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import studio.tearule.api.dto.CreateTeaLotRequest
 import studio.tearule.api.dto.ImportTeaLotsRequest
 import studio.tearule.api.dto.ImportTeaLotsResponse
+import studio.tearule.api.dto.UpdateTeaLotRequest
+import studio.tearule.repository.TeaLotRepository
 import studio.tearule.api.validation.ValidationUtils
 import studio.tearule.api.validation.ValidationResult
-import studio.tearule.repository.TeaLotRepository
 
 fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
     route("/tea-lots") {
@@ -25,19 +29,13 @@ fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
 
         post {
             val request = call.receive<CreateTeaLotRequest>()
-            
-            ValidationUtils.validateCreateTeaLotRequest(request).let { result ->
-                when (result) {
-                    is ValidationResult.Invalid -> {
-                        call.respond(HttpStatusCode.BadRequest, mapOf("errors" to result.errors))
-                        return@post
-                    }
-                    is ValidationResult.Valid -> {
-                        // Continue with creation
-                    }
-                }
+            val validationResult = ValidationUtils.validateCreateTeaLotRequest(request)
+            if (validationResult is ValidationResult.Invalid) {
+                return@post call.respond(HttpStatusCode.BadRequest, mapOf(
+                    "error" to "Validation failed",
+                    "details" to validationResult.errors
+                ))
             }
-            
             val teaLot = teaLotRepository.create(request)
             call.respond(HttpStatusCode.Created, teaLot)
         }
@@ -45,7 +43,7 @@ fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
         delete {
             val ids = call.receive<List<Long>>()
             val count = teaLotRepository.deleteByIds(ids)
-            call.respond(mapOf("deleted" to count))
+            call.respond(mapOf<String, Any>("deleted" to count))
         }
 
         get("/{id}") {
@@ -57,17 +55,35 @@ fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
 
             call.respond(teaLot)
         }
+    }
 
-        delete("/{id}") {
-            val id = call.parameters["id"]?.toLongOrNull()
-                ?: return@delete call.respond(HttpStatusCode.BadRequest, mapOf("error" to "invalid id"))
+    put("/tea-lots/{id}") {
+        val id = call.parameters["id"]?.toLongOrNull()
+            ?: return@put call.respond(HttpStatusCode.BadRequest, mapOf("error" to "invalid id"))
 
-            val deleted = teaLotRepository.deleteById(id)
-            if (deleted) {
-                call.respond(HttpStatusCode.NoContent)
-            } else {
-                call.respond(HttpStatusCode.NotFound, mapOf("error" to "tea lot not found"))
+        val request = call.receive<UpdateTeaLotRequest>()
+        ValidationUtils.validateUpdateTeaLotRequest(request).let { result ->
+            when (result) {
+                is ValidationResult.Invalid -> throw IllegalArgumentException("Validation failed: ${result.errors.joinToString()}")
+                is ValidationResult.Valid -> {}
             }
+        }
+
+        val updatedTeaLot = teaLotRepository.update(id, request)
+            ?: return@put call.respond(HttpStatusCode.NotFound, mapOf("error" to "tea lot not found"))
+
+        call.respond(updatedTeaLot)
+    }
+
+    delete("/tea-lots/{id}") {
+        val id = call.parameters["id"]?.toLongOrNull()
+            ?: return@delete call.respond(HttpStatusCode.BadRequest, mapOf("error" to "invalid id"))
+
+        val deleted = teaLotRepository.deleteById(id)
+        if (deleted) {
+            call.respond(HttpStatusCode.NoContent)
+        } else {
+            call.respond(HttpStatusCode.NotFound, mapOf("error" to "tea lot not found"))
         }
     }
 
@@ -80,6 +96,13 @@ fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
 
     post("/import/tea-lots") {
         val request = call.receive<ImportTeaLotsRequest>()
+        val validationResult = ValidationUtils.validateImportTeaLotsRequest(request)
+        if (validationResult is ValidationResult.Invalid) {
+            return@post call.respond(HttpStatusCode.BadRequest, mapOf(
+                "error" to "Validation failed",
+                "details" to validationResult.errors
+            ))
+        }
         val importedTeaLots = request.teaLots.map { teaLotRepository.create(it) }
         val response = ImportTeaLotsResponse(importedTeaLots.size, importedTeaLots)
         call.respond(HttpStatusCode.Created, response)

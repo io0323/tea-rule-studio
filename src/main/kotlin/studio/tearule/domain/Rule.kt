@@ -11,7 +11,7 @@ data class Rule(
 )
 
 enum class Severity {
-    INFO,
-    WARNING,
-    BLOCK,
+    LOW,
+    MEDIUM,
+    HIGH,
 }
