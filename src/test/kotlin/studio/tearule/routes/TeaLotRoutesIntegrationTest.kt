@@ -1,8 +1,9 @@
 package studio.tearule.routes
 
 import io.ktor.http.*
+import io.ktor.server.application.*
 import io.ktor.server.testing.*
-import io.ktor.server.plugins.routing.Routing
+import io.ktor.server.routing.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -35,10 +36,7 @@ class TeaLotRoutesIntegrationTest {
     @Test
     fun `GET tea-lots returns all tea lots`() = withTestApplication {
         val teaLotRepository = TeaLotRepository()
-        routing {
-            teaLotRoutes(teaLotRepository)
-        }
-
+        
         // insert data
         teaLotRepository.create(CreateTeaLotRequest("LOT001", "China", "Green", 12.5, 2.0, 9))
 
@@ -53,9 +51,6 @@ class TeaLotRoutesIntegrationTest {
     @Test
     fun `POST tea-lots creates new tea lot`() = withTestApplication {
         val teaLotRepository = TeaLotRepository()
-        routing {
-            teaLotRoutes(teaLotRepository)
-        }
 
         // test
         handleRequest(HttpMethod.Post, "/tea-lots") {
@@ -71,10 +66,7 @@ class TeaLotRoutesIntegrationTest {
     @Test
     fun `GET tea-lots id returns specific tea lot`() = withTestApplication {
         val teaLotRepository = TeaLotRepository()
-        routing {
-            teaLotRoutes(teaLotRepository)
-        }
-
+        
         // insert data
         val created = teaLotRepository.create(CreateTeaLotRequest("LOT001", "China", "Green", 12.5, 2.0, 9))
 

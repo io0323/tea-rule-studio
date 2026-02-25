@@ -7,6 +7,7 @@ import io.ktor.server.application.install
 import io.ktor.server.netty.EngineMain
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.plugins.statuspages.exception
 import org.jetbrains.exposed.exceptions.ExposedSQLException
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.response.respond
@@ -17,6 +18,8 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.http.content.staticResources
 import io.ktor.server.request.*
+import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import kotlinx.serialization.json.Json
 import io.ktor.serialization.kotlinx.json.json
 import studio.tearule.api.routes.ruleRoutes
@@ -68,42 +71,20 @@ fun Application.module() {
         allowCredentials = true
     }
 
+    // install(CallLogging)
+
     install(StatusPages) {
         exception<IllegalArgumentException> { call, cause ->
-            call.respond(
-                status = io.ktor.http.HttpStatusCode.BadRequest,
-                message = mapOf(
-                    "message" to (cause.message ?: "Invalid request"),
-                    "status" to 400,
-                ),
-            )
+            call.respondText("{\"message\": \"Invalid request\", \"status\": 400}", ContentType.Application.Json, HttpStatusCode.BadRequest)
         }
         exception<ExposedSQLException> { call, cause ->
-            call.respond(
-                status = io.ktor.http.HttpStatusCode.InternalServerError,
-                message = mapOf(
-                    "message" to "Database error",
-                    "status" to 500,
-                ),
-            )
+            call.respondText("{\"message\": \"Database error\", \"status\": 500}", ContentType.Application.Json, HttpStatusCode.InternalServerError)
         }
         exception<Exception> { call, cause ->
-            call.respond(
-                status = io.ktor.http.HttpStatusCode.InternalServerError,
-                message = mapOf(
-                    "message" to (cause.message ?: "Internal server error"),
-                    "status" to 500,
-                ),
-            )
+            call.respondText("{\"message\": \"Internal server error\", \"status\": 500}", ContentType.Application.Json, HttpStatusCode.InternalServerError)
         }
         exception<Throwable> { call, cause ->
-            call.respond(
-                status = io.ktor.http.HttpStatusCode.InternalServerError,
-                message = mapOf(
-                    "message" to "Unexpected error",
-                    "status" to 500,
-                ),
-            )
+            call.respondText("{\"message\": \"Unexpected error\", \"status\": 500}", ContentType.Application.Json, HttpStatusCode.InternalServerError)
         }
     }
 
