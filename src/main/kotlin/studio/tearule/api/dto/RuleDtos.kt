@@ -11,6 +11,13 @@ data class CreateRuleRequest(
 )
 
 @Serializable
+data class UpdateRuleRequest(
+    val name: String? = null,
+    val dsl: String? = null,
+    val severity: Severity? = null,
+)
+
+@Serializable
 data class RuleResponse(
     val id: Long,
     val name: String,

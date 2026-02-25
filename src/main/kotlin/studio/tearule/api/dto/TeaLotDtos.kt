@@ -13,6 +13,16 @@ data class CreateTeaLotRequest(
 )
 
 @Serializable
+data class UpdateTeaLotRequest(
+    val lotCode: String? = null,
+    val origin: String? = null,
+    val variety: String? = null,
+    val moisture: Double? = null,
+    val pesticideLevel: Double? = null,
+    val aromaScore: Int? = null,
+)
+
+@Serializable
 data class TeaLotResponse(
     val id: Long,
     val lotCode: String,
