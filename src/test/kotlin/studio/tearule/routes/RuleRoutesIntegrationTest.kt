@@ -1,8 +1,9 @@
 package studio.tearule.routes
 
 import io.ktor.http.*
+import io.ktor.server.application.*
 import io.ktor.server.testing.*
-import io.ktor.routing.routing
+import io.ktor.server.routing.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -36,10 +37,7 @@ class RuleRoutesIntegrationTest {
     @Test
     fun `GET rules returns all rules`() = withTestApplication {
         val ruleRepository = RuleRepository()
-        routing {
-            ruleRoutes(ruleRepository)
-        }
-
+        
         // insert data
         ruleRepository.create(CreateRuleRequest("Rule1", "dsl", Severity.MEDIUM))
 
@@ -54,9 +52,6 @@ class RuleRoutesIntegrationTest {
     @Test
     fun `POST rules creates new rule`() = withTestApplication {
         val ruleRepository = RuleRepository()
-        routing {
-            ruleRoutes(ruleRepository)
-        }
 
         // test
         handleRequest(HttpMethod.Post, "/rules") {
@@ -72,10 +67,7 @@ class RuleRoutesIntegrationTest {
     @Test
     fun `GET rules id returns specific rule`() = withTestApplication {
         val ruleRepository = RuleRepository()
-        routing {
-            ruleRoutes(ruleRepository)
-        }
-
+        
         // insert data
         val created = ruleRepository.create(CreateRuleRequest("Rule1", "dsl", Severity.MEDIUM))
 
