@@ -8,8 +8,8 @@ import io.ktor.server.netty.EngineMain
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.plugins.statuspages.exception
-import org.jetbrains.exposed.exceptions.ExposedSQLException
 import io.ktor.server.plugins.cors.routing.CORS
+import org.jetbrains.exposed.exceptions.ExposedSQLException
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.get
@@ -70,8 +70,6 @@ fun Application.module() {
         allowHeader(io.ktor.http.HttpHeaders.Authorization)
         allowCredentials = true
     }
-
-    // install(CallLogging)
 
     install(StatusPages) {
         exception<IllegalArgumentException> { call, cause ->
