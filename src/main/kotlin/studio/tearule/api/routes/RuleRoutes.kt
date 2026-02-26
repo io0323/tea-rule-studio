@@ -19,8 +19,6 @@ import studio.tearule.api.dto.ImportRulesResponse
 import studio.tearule.api.validation.ValidationUtils
 import studio.tearule.api.validation.ValidationResult
 import studio.tearule.repository.RuleRepository
-import studio.tearule.api.validation.ValidationUtils
-import studio.tearule.api.validation.ValidationResult
 
 fun Route.ruleRoutes(ruleRepository: RuleRepository) {
     route("/rules") {

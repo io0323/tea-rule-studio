@@ -24,10 +24,3 @@ data class RuleResponse(
     val dsl: String,
     val severity: Severity,
 )
-
-@Serializable
-data class UpdateRuleRequest(
-    val name: String? = null,
-    val dsl: String? = null,
-    val severity: Severity? = null,
-)
