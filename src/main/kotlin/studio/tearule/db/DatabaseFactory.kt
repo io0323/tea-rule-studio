@@ -30,4 +30,15 @@ object DatabaseFactory {
             SchemaUtils.create(TeaLots, Rules)
         }
     }
+
+    fun checkConnection(): Boolean {
+        return try {
+            transaction {
+                exec("SELECT 1")
+            }
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
 }

@@ -103,7 +103,8 @@ fun Application.module() {
         }
 
         get("/health") {
-            call.respond(mapOf("status" to "ok"))
+            val dbConnected = DatabaseFactory.checkConnection()
+            call.respond(mapOf("status" to if (dbConnected) "ok" else "error", "database" to if (dbConnected) "connected" else "disconnected"))
         }
 
         ruleRoutes(ruleRepository)
