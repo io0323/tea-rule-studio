@@ -1,6 +1,6 @@
 plugins {
-    kotlin("jvm") version "2.0.21"
-    kotlin("plugin.serialization") version "2.0.21"
+    kotlin("jvm") version "1.9.21"
+    kotlin("plugin.serialization") version "1.9.21"
     application
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
@@ -31,7 +31,8 @@ dependencies {
     implementation("org.postgresql:postgresql:42.7.3")
     implementation("com.h2database:h2:2.3.232")
 
-    implementation("ch.qos.logback:logback-classic:1.5.6")
+    implementation("org.slf4j:slf4j-api:1.7.36")
+    implementation("ch.qos.logback:logback-classic:1.4.11")
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 
     testImplementation(kotlin("test"))
