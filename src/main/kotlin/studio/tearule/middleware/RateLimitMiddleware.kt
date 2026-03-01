@@ -11,6 +11,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.seconds
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * Simple token bucket implementation for rate limiting
@@ -55,6 +57,7 @@ class RateLimitMiddleware(
     private val buckets = ConcurrentHashMap<String, TokenBucket>()
     private val refillRate = requestsPerMinute / 60.0 // tokens per second
     private val capacity = burstCapacity.toDouble()
+    private val logger = LoggerFactory.getLogger(RateLimitMiddleware::class.java)
 
     suspend fun intercept(context: PipelineContext<Unit, ApplicationCall>) {
         val call = context.context
@@ -65,6 +68,7 @@ class RateLimitMiddleware(
         }
 
         if (!bucket.tryConsume()) {
+            logger.warn("Rate limit exceeded for client: {}", clientKey)
             call.respond(HttpStatusCode.TooManyRequests, mapOf(
                 "error" to "Rate limit exceeded",
                 "retry_after" to 60, // seconds
