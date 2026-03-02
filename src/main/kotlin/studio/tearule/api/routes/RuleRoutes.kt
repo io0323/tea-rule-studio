@@ -19,8 +19,11 @@ import studio.tearule.api.dto.ImportRulesResponse
 import studio.tearule.api.validation.ValidationUtils
 import studio.tearule.api.validation.ValidationResult
 import studio.tearule.repository.RuleRepository
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 fun Route.ruleRoutes(ruleRepository: RuleRepository) {
+    val logger = LoggerFactory.getLogger("RuleRoutes")
     route("/rules") {
         get {
             val rules = ruleRepository.findAll()
@@ -31,6 +34,7 @@ fun Route.ruleRoutes(ruleRepository: RuleRepository) {
             val request = call.receive<CreateRuleRequest>()
             val validationResult = ValidationUtils.validateCreateRuleRequest(request)
             if (validationResult is ValidationResult.Invalid) {
+                logger.warn("Create rule validation failed: {}", validationResult.errors.joinToString(", "))
                 return@post call.respond(HttpStatusCode.BadRequest, mapOf(
                     "error" to "Validation failed",
                     "details" to validationResult.errors
