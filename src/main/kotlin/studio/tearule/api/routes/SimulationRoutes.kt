@@ -12,8 +12,11 @@ import studio.tearule.api.dto.BulkSimulationResponse
 import studio.tearule.service.RuleEvaluationService
 import studio.tearule.api.validation.ValidationUtils
 import studio.tearule.api.validation.ValidationResult
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 fun Route.simulationRoutes(ruleEvaluationService: RuleEvaluationService) {
+    val logger = LoggerFactory.getLogger("SimulationRoutes")
     route("/simulate") {
         post("/{teaLotId}") {
             val teaLotId = call.parameters["teaLotId"]?.toLongOrNull()
@@ -32,6 +35,7 @@ fun Route.simulationRoutes(ruleEvaluationService: RuleEvaluationService) {
             val request = call.receive<BulkSimulationRequest>()
             val validationResult = ValidationUtils.validateBulkSimulationRequest(request)
             if (validationResult is ValidationResult.Invalid) {
+                logger.warn("Bulk simulation validation failed: {}", validationResult.errors.joinToString(", "))
                 return@post call.respond(HttpStatusCode.BadRequest, mapOf(
                     "error" to "Validation failed",
                     "details" to validationResult.errors

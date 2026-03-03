@@ -19,8 +19,11 @@ import studio.tearule.api.dto.UpdateTeaLotRequest
 import studio.tearule.repository.TeaLotRepository
 import studio.tearule.api.validation.ValidationUtils
 import studio.tearule.api.validation.ValidationResult
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
+    val logger = LoggerFactory.getLogger("TeaLotRoutes")
     route("/tea-lots") {
         get {
             val teaLots = teaLotRepository.findAll()
@@ -31,6 +34,7 @@ fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
             val request = call.receive<CreateTeaLotRequest>()
             val validationResult = ValidationUtils.validateCreateTeaLotRequest(request)
             if (validationResult is ValidationResult.Invalid) {
+                logger.warn("Create tea lot validation failed: {}", validationResult.errors.joinToString(", "))
                 return@post call.respond(HttpStatusCode.BadRequest, mapOf(
                     "error" to "Validation failed",
                     "details" to validationResult.errors
@@ -64,7 +68,13 @@ fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
         val request = call.receive<UpdateTeaLotRequest>()
         ValidationUtils.validateUpdateTeaLotRequest(request).let { result ->
             when (result) {
-                is ValidationResult.Invalid -> throw IllegalArgumentException("Validation failed: ${result.errors.joinToString()}")
+                is ValidationResult.Invalid -> {
+                    logger.warn("Update tea lot validation failed: {}", result.errors.joinToString(", "))
+                    return@put call.respond(HttpStatusCode.BadRequest, mapOf(
+                        "error" to "Validation failed",
+                        "details" to result.errors
+                    ))
+                }
                 is ValidationResult.Valid -> {}
             }
         }
@@ -98,6 +108,7 @@ fun Route.teaLotRoutes(teaLotRepository: TeaLotRepository) {
         val request = call.receive<ImportTeaLotsRequest>()
         val validationResult = ValidationUtils.validateImportTeaLotsRequest(request)
         if (validationResult is ValidationResult.Invalid) {
+            logger.warn("Import tea lots validation failed: {}", validationResult.errors.joinToString(", "))
             return@post call.respond(HttpStatusCode.BadRequest, mapOf(
                 "error" to "Validation failed",
                 "details" to validationResult.errors
