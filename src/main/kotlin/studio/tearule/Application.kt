@@ -74,12 +74,19 @@ fun Application.module() {
 
         get("/health") {
             val dbConnected = DatabaseFactory.checkConnection()
+            val rulesCount = if (dbConnected) ruleRepository.findAll().size else 0
+            val teaLotsCount = if (dbConnected) teaLotRepository.findAll().size else 0
             if (dbConnected) {
-                log.info("Health check: Database connected")
+                log.info("Health check: Database connected, rules: $rulesCount, tea lots: $teaLotsCount")
             } else {
                 log.error("Health check: Database disconnected")
             }
-            call.respond(mapOf("status" to if (dbConnected) "ok" else "error", "database" to if (dbConnected) "connected" else "disconnected"))
+            call.respond(mapOf(
+                "status" to if (dbConnected) "ok" else "error",
+                "database" to if (dbConnected) "connected" else "disconnected",
+                "rules_count" to rulesCount,
+                "tea_lots_count" to teaLotsCount
+            ))
         }
 
         ruleRoutes(ruleRepository)
