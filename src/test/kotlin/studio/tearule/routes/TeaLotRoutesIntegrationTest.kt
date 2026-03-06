@@ -21,6 +21,8 @@ import studio.tearule.repository.TeaLotRepository
 import studio.tearule.api.dto.ApiResponse
 import studio.tearule.api.dto.TeaLotResponse
 import kotlinx.serialization.json.Json
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class TeaLotRoutesIntegrationTest {
 
@@ -41,10 +43,11 @@ class TeaLotRoutesIntegrationTest {
 
     @Test
     fun `GET tea-lots returns all tea lots`() = testApplication {
-        val app = application
         val teaLotRepository = TeaLotRepository()
-        app.routing {
-            teaLotRoutes(teaLotRepository)
+        application {
+            routing {
+                teaLotRoutes(teaLotRepository)
+            }
         }
         // insert data
         teaLotRepository.create(CreateTeaLotRequest("LOT001", "China", "Green", 12.5, 2.0, 9))
@@ -70,10 +73,11 @@ class TeaLotRoutesIntegrationTest {
 
     @Test
     fun `POST tea-lots creates new tea lot`() = testApplication {
-        val app = application
         val teaLotRepository = TeaLotRepository()
-        app.routing {
-            teaLotRoutes(teaLotRepository)
+        application {
+            routing {
+                teaLotRoutes(teaLotRepository)
+            }
         }
 
         val client = createClient {
@@ -99,15 +103,14 @@ class TeaLotRoutesIntegrationTest {
 
     @Test
     fun `GET tea-lots id returns specific tea lot`() = testApplication {
-        val app = application
-        var createdId: Long = 0L
         val teaLotRepository = TeaLotRepository()
-        app.routing {
-            teaLotRoutes(teaLotRepository)
+        application {
+            routing {
+                teaLotRoutes(teaLotRepository)
+            }
         }
         // insert data
         val created = teaLotRepository.create(CreateTeaLotRequest("LOT001", "China", "Green", 12.5, 2.0, 9))
-        createdId = created.id
 
         val client = createClient {
             install(ContentNegotiation) {
@@ -120,7 +123,7 @@ class TeaLotRoutesIntegrationTest {
             }
         }
 
-        val response = client.get("/tea-lots/${createdId}")
+        val response = client.get("/tea-lots/${created.id}")
         assertEquals(HttpStatusCode.OK, response.status)
         val apiResponse = response.body<ApiResponse<TeaLotResponse>>()
         assertTrue(apiResponse.success)
