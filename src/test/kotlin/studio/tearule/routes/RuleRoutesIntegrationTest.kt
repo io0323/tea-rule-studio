@@ -44,10 +44,11 @@ class RuleRoutesIntegrationTest {
 
     @Test
     fun `GET rules returns all rules`() = testApplication {
-        val app = application
         val ruleRepository = RuleRepository()
-        app.routing {
-            ruleRoutes(ruleRepository)
+        application {
+            routing {
+                ruleRoutes(ruleRepository)
+            }
         }
         // insert data
         ruleRepository.create(CreateRuleRequest("Rule1", "dsl", Severity.MEDIUM))
@@ -73,10 +74,11 @@ class RuleRoutesIntegrationTest {
 
     @Test
     fun `POST rules creates new rule`() = testApplication {
-        val app = application
         val ruleRepository = RuleRepository()
-        app.routing {
-            ruleRoutes(ruleRepository)
+        application {
+            routing {
+                ruleRoutes(ruleRepository)
+            }
         }
 
         val client = createClient {
@@ -102,10 +104,11 @@ class RuleRoutesIntegrationTest {
 
     @Test
     fun `GET rules id returns specific rule`() = testApplication {
-        val app = application
         val ruleRepository = RuleRepository()
-        app.routing {
-            ruleRoutes(ruleRepository)
+        application {
+            routing {
+                ruleRoutes(ruleRepository)
+            }
         }
         // insert data
         val created = ruleRepository.create(CreateRuleRequest("Rule1", "dsl", Severity.MEDIUM))

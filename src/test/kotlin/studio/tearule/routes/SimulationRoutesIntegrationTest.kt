@@ -50,12 +50,13 @@ class SimulationRoutesIntegrationTest {
 
     @Test
     fun `POST simulate teaLotId returns simulation response`() = testApplication {
-        val app = application
         val ruleRepository = RuleRepository()
         val teaLotRepository = TeaLotRepository()
         val ruleEvaluationService = RuleEvaluationService(ruleRepository, teaLotRepository)
-        app.routing {
-            simulationRoutes(ruleEvaluationService)
+        application {
+            routing {
+                simulationRoutes(ruleEvaluationService)
+            }
         }
         // insert data
         ruleRepository.create(CreateRuleRequest("Rule1", "dsl", Severity.MEDIUM))
@@ -81,18 +82,17 @@ class SimulationRoutesIntegrationTest {
 
     @Test
     fun `POST simulate bulk returns bulk simulation response`() = testApplication {
-        val app = application
-        var teaLotId: Long = 0L
         val ruleRepository = RuleRepository()
         val teaLotRepository = TeaLotRepository()
         val ruleEvaluationService = RuleEvaluationService(ruleRepository, teaLotRepository)
-        app.routing {
-            simulationRoutes(ruleEvaluationService)
+        application {
+            routing {
+                simulationRoutes(ruleEvaluationService)
+            }
         }
         // insert data
         ruleRepository.create(CreateRuleRequest("Rule1", "dsl", Severity.MEDIUM))
         val teaLot = teaLotRepository.create(CreateTeaLotRequest("LOT001", "China", "Green", 12.5, 2.0, 9))
-        teaLotId = teaLot.id
 
         val client = createClient {
             install(ContentNegotiation) {
@@ -107,7 +107,7 @@ class SimulationRoutesIntegrationTest {
 
         val response = client.post("/simulate") {
             contentType(ContentType.Application.Json)
-            setBody(BulkSimulationRequest(listOf(teaLotId)))
+            setBody(BulkSimulationRequest(listOf(teaLot.id)))
         }
         assertEquals(HttpStatusCode.OK, response.status)
         val apiResponse = response.body<ApiResponse<BulkSimulationResponse>>()

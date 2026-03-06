@@ -38,6 +38,9 @@ dependencies {
     implementation("io.ktor:ktor-client-core-jvm:2.3.12")
     implementation("io.ktor:ktor-client-cio-jvm:2.3.12")
     implementation("io.ktor:ktor-client-content-negotiation-jvm:2.3.12")
+
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+    testImplementation("io.ktor:ktor-server-test-host-jvm:2.3.12")
 }
 
 kotlin {
