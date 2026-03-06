@@ -4,6 +4,10 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.testing.*
 import io.ktor.server.routing.*
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -14,7 +18,9 @@ import studio.tearule.api.dto.CreateTeaLotRequest
 import studio.tearule.api.routes.teaLotRoutes
 import studio.tearule.db.tables.TeaLots
 import studio.tearule.repository.TeaLotRepository
-import kotlin.test.assertEquals
+import studio.tearule.api.dto.ApiResponse
+import studio.tearule.api.dto.TeaLotResponse
+import kotlinx.serialization.json.Json
 
 class TeaLotRoutesIntegrationTest {
 
@@ -34,48 +40,91 @@ class TeaLotRoutesIntegrationTest {
     }
 
     @Test
-    fun `GET tea-lots returns all tea lots`() = withTestApplication {
+    fun `GET tea-lots returns all tea lots`() = testApplication {
+        val app = application
         val teaLotRepository = TeaLotRepository()
-        
+        app.routing {
+            teaLotRoutes(teaLotRepository)
+        }
         // insert data
         teaLotRepository.create(CreateTeaLotRequest("LOT001", "China", "Green", 12.5, 2.0, 9))
 
-        // test
-        handleRequest(HttpMethod.Get, "/tea-lots").apply {
-            assertEquals(HttpStatusCode.OK, response.status())
-            val responseBody = response.content
-            assert(responseBody?.contains("LOT001") == true)
+        val client = createClient {
+            install(ContentNegotiation) {
+                json(Json {
+                    prettyPrint = false
+                    isLenient = false
+                    ignoreUnknownKeys = false
+                    explicitNulls = false
+                })
+            }
         }
+
+        val response = client.get("/tea-lots")
+        assertEquals(HttpStatusCode.OK, response.status)
+        val apiResponse = response.body<ApiResponse<List<TeaLotResponse>>>()
+        assertTrue(apiResponse.success)
+        assertEquals(1, apiResponse.data?.size)
+        assertEquals("LOT001", apiResponse.data?.first()?.lotCode)
     }
 
     @Test
-    fun `POST tea-lots creates new tea lot`() = withTestApplication {
+    fun `POST tea-lots creates new tea lot`() = testApplication {
+        val app = application
         val teaLotRepository = TeaLotRepository()
-
-        // test
-        handleRequest(HttpMethod.Post, "/tea-lots") {
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-            setBody("""{"lotCode":"LOT002","origin":"Japan","variety":"Black","moisture":10.0,"pesticideLevel":1.5,"aromaScore":8}""")
-        }.apply {
-            assertEquals(HttpStatusCode.Created, response.status())
-            val responseBody = response.content
-            assert(responseBody?.contains("LOT002") == true)
+        app.routing {
+            teaLotRoutes(teaLotRepository)
         }
+
+        val client = createClient {
+            install(ContentNegotiation) {
+                json(Json {
+                    prettyPrint = false
+                    isLenient = false
+                    ignoreUnknownKeys = false
+                    explicitNulls = false
+                })
+            }
+        }
+
+        val response = client.post("/tea-lots") {
+            contentType(ContentType.Application.Json)
+            setBody(CreateTeaLotRequest("LOT002", "Japan", "Black", 10.0, 1.5, 8))
+        }
+        assertEquals(HttpStatusCode.Created, response.status)
+        val apiResponse = response.body<ApiResponse<TeaLotResponse>>()
+        assertTrue(apiResponse.success)
+        assertEquals("LOT002", apiResponse.data?.lotCode)
     }
 
     @Test
-    fun `GET tea-lots id returns specific tea lot`() = withTestApplication {
+    fun `GET tea-lots id returns specific tea lot`() = testApplication {
+        val app = application
+        var createdId: Long = 0L
         val teaLotRepository = TeaLotRepository()
-        
+        app.routing {
+            teaLotRoutes(teaLotRepository)
+        }
         // insert data
         val created = teaLotRepository.create(CreateTeaLotRequest("LOT001", "China", "Green", 12.5, 2.0, 9))
+        createdId = created.id
 
-        // test
-        handleRequest(HttpMethod.Get, "/tea-lots/${created.id}").apply {
-            assertEquals(HttpStatusCode.OK, response.status())
-            val responseBody = response.content
-            assert(responseBody?.contains("LOT001") == true)
+        val client = createClient {
+            install(ContentNegotiation) {
+                json(Json {
+                    prettyPrint = false
+                    isLenient = false
+                    ignoreUnknownKeys = false
+                    explicitNulls = false
+                })
+            }
         }
+
+        val response = client.get("/tea-lots/${createdId}")
+        assertEquals(HttpStatusCode.OK, response.status)
+        val apiResponse = response.body<ApiResponse<TeaLotResponse>>()
+        assertTrue(apiResponse.success)
+        assertEquals("LOT001", apiResponse.data?.lotCode)
     }
 
 }
