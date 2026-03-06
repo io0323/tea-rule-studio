@@ -35,9 +35,9 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.4.11")
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 
-    testImplementation(kotlin("test"))
-    testImplementation("io.ktor:ktor-server-test-host-jvm:2.3.12")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
+    implementation("io.ktor:ktor-client-core-jvm:2.3.12")
+    implementation("io.ktor:ktor-client-cio-jvm:2.3.12")
+    implementation("io.ktor:ktor-client-content-negotiation-jvm:2.3.12")
 }
 
 kotlin {

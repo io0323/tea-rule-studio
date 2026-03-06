@@ -14,43 +14,52 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import studio.tearule.api.dto.CreateRuleRequest
-import studio.tearule.api.routes.ruleRoutes
+import studio.tearule.api.dto.CreateTeaLotRequest
+import studio.tearule.api.routes.simulationRoutes
 import studio.tearule.db.tables.Rules
-import studio.tearule.domain.Severity
+import studio.tearule.db.tables.TeaLots
 import studio.tearule.repository.RuleRepository
+import studio.tearule.repository.TeaLotRepository
+import studio.tearule.service.RuleEvaluationService
 import studio.tearule.api.dto.ApiResponse
-import studio.tearule.api.dto.RuleResponse
+import studio.tearule.api.dto.SimulationResponse
+import studio.tearule.api.dto.BulkSimulationResponse
+import studio.tearule.api.dto.BulkSimulationRequest
+import studio.tearule.api.dto.CreateRuleRequest
+import studio.tearule.domain.Severity
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
 
-class RuleRoutesIntegrationTest {
+class SimulationRoutesIntegrationTest {
 
     @BeforeEach
     fun setup() {
         Database.connect("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver")
         transaction {
-            SchemaUtils.create(Rules)
+            SchemaUtils.create(Rules, TeaLots)
         }
     }
 
     @AfterEach
     fun teardown() {
         transaction {
-            SchemaUtils.drop(Rules)
+            SchemaUtils.drop(Rules, TeaLots)
         }
     }
 
     @Test
-    fun `GET rules returns all rules`() = testApplication {
+    fun `POST simulate teaLotId returns simulation response`() = testApplication {
         val app = application
         val ruleRepository = RuleRepository()
+        val teaLotRepository = TeaLotRepository()
+        val ruleEvaluationService = RuleEvaluationService(ruleRepository, teaLotRepository)
         app.routing {
-            ruleRoutes(ruleRepository)
+            simulationRoutes(ruleEvaluationService)
         }
         // insert data
         ruleRepository.create(CreateRuleRequest("Rule1", "dsl", Severity.MEDIUM))
+        val teaLotId = teaLotRepository.create(CreateTeaLotRequest("LOT001", "China", "Green", 12.5, 2.0, 9)).id
 
         val client = createClient {
             install(ContentNegotiation) {
@@ -63,52 +72,27 @@ class RuleRoutesIntegrationTest {
             }
         }
 
-        val response = client.get("/rules")
+        val response = client.post("/simulate/${teaLotId}")
         assertEquals(HttpStatusCode.OK, response.status)
-        val apiResponse = response.body<ApiResponse<List<RuleResponse>>>()
+        val apiResponse = response.body<ApiResponse<SimulationResponse>>()
         assertTrue(apiResponse.success)
-        assertEquals(1, apiResponse.data?.size)
-        assertEquals("Rule1", apiResponse.data?.first()?.name)
+        assertEquals(1, apiResponse.data?.results?.size)
     }
 
     @Test
-    fun `POST rules creates new rule`() = testApplication {
+    fun `POST simulate bulk returns bulk simulation response`() = testApplication {
         val app = application
+        var teaLotId: Long = 0L
         val ruleRepository = RuleRepository()
+        val teaLotRepository = TeaLotRepository()
+        val ruleEvaluationService = RuleEvaluationService(ruleRepository, teaLotRepository)
         app.routing {
-            ruleRoutes(ruleRepository)
-        }
-
-        val client = createClient {
-            install(ContentNegotiation) {
-                json(Json {
-                    prettyPrint = false
-                    isLenient = false
-                    ignoreUnknownKeys = false
-                    explicitNulls = false
-                })
-            }
-        }
-
-        val response = client.post("/rules") {
-            contentType(ContentType.Application.Json)
-            setBody(CreateRuleRequest("Rule2", "some dsl", Severity.LOW))
-        }
-        assertEquals(HttpStatusCode.Created, response.status)
-        val apiResponse = response.body<ApiResponse<RuleResponse>>()
-        assertTrue(apiResponse.success)
-        assertEquals("Rule2", apiResponse.data?.name)
-    }
-
-    @Test
-    fun `GET rules id returns specific rule`() = testApplication {
-        val app = application
-        val ruleRepository = RuleRepository()
-        app.routing {
-            ruleRoutes(ruleRepository)
+            simulationRoutes(ruleEvaluationService)
         }
         // insert data
-        val created = ruleRepository.create(CreateRuleRequest("Rule1", "dsl", Severity.MEDIUM))
+        ruleRepository.create(CreateRuleRequest("Rule1", "dsl", Severity.MEDIUM))
+        val teaLot = teaLotRepository.create(CreateTeaLotRequest("LOT001", "China", "Green", 12.5, 2.0, 9))
+        teaLotId = teaLot.id
 
         val client = createClient {
             install(ContentNegotiation) {
@@ -121,11 +105,14 @@ class RuleRoutesIntegrationTest {
             }
         }
 
-        val response = client.get("/rules/${created.id}")
+        val response = client.post("/simulate") {
+            contentType(ContentType.Application.Json)
+            setBody(BulkSimulationRequest(listOf(teaLotId)))
+        }
         assertEquals(HttpStatusCode.OK, response.status)
-        val apiResponse = response.body<ApiResponse<RuleResponse>>()
+        val apiResponse = response.body<ApiResponse<BulkSimulationResponse>>()
         assertTrue(apiResponse.success)
-        assertEquals("Rule1", apiResponse.data?.name)
+        assertEquals(1, apiResponse.data?.results?.size)
     }
 
 }
