@@ -14,21 +14,22 @@ import studio.tearule.api.validation.ValidationUtils
 import studio.tearule.api.validation.ValidationResult
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import studio.tearule.api.dto.ApiResponse
 
 fun Route.simulationRoutes(ruleEvaluationService: RuleEvaluationService) {
     val logger = LoggerFactory.getLogger("SimulationRoutes")
     route("/simulate") {
         post("/{teaLotId}") {
             val teaLotId = call.parameters["teaLotId"]?.toLongOrNull()
-                ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "invalid teaLotId"))
+                ?: return@post call.respond(HttpStatusCode.BadRequest, ApiResponse<String>(success = false, error = "invalid teaLotId"))
 
             val response = try {
                 ruleEvaluationService.simulate(teaLotId)
             } catch (e: IllegalStateException) {
-                return@post call.respond(HttpStatusCode.NotFound, mapOf("error" to (e.message ?: "not found")))
+                return@post call.respond(HttpStatusCode.NotFound, ApiResponse<String>(success = false, error = (e.message ?: "not found")))
             }
 
-            call.respond(response)
+            call.respond(ApiResponse<studio.tearule.api.dto.SimulationResponse>(success = true, data = response))
         }
 
         post {
@@ -36,10 +37,7 @@ fun Route.simulationRoutes(ruleEvaluationService: RuleEvaluationService) {
             val validationResult = ValidationUtils.validateBulkSimulationRequest(request)
             if (validationResult is ValidationResult.Invalid) {
                 logger.warn("Bulk simulation validation failed: {}", validationResult.errors.joinToString(", "))
-                return@post call.respond(HttpStatusCode.BadRequest, mapOf(
-                    "error" to "Validation failed",
-                    "details" to validationResult.errors
-                ))
+                return@post call.respond(HttpStatusCode.BadRequest, ApiResponse<List<String>>(success = false, error = "Validation failed", data = validationResult.errors))
             }
             val results = request.teaLotIds.map { teaLotId ->
                 try {
@@ -49,7 +47,7 @@ fun Route.simulationRoutes(ruleEvaluationService: RuleEvaluationService) {
                 }
             }.filterNotNull()
             
-            call.respond(BulkSimulationResponse(results))
+            call.respond(ApiResponse<studio.tearule.api.dto.BulkSimulationResponse>(success = true, data = BulkSimulationResponse(results)))
         }
     }
 }
