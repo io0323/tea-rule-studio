@@ -10,7 +10,7 @@ import studio.tearule.api.dto.ApiResponse
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
-import studio.tearule.DatabaseFactory
+import studio.tearule.db.DatabaseFactory
 import studio.tearule.api.routes.ruleRoutes
 import studio.tearule.api.routes.teaLotRoutes
 import studio.tearule.api.routes.simulationRoutes
@@ -21,6 +21,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import io.ktor.server.application.call
 import io.ktor.server.response.respond
+import io.ktor.client.request.get
 
 class ApplicationIntegrationTest {
 
