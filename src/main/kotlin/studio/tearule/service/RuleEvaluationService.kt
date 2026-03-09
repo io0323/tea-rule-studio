@@ -1,6 +1,7 @@
 package studio.tearule.service
 
 import studio.tearule.api.dto.RuleResultDto
+import studio.tearule.api.dto.RuleResponse
 import studio.tearule.api.dto.SimulationResponse
 import studio.tearule.domain.Severity
 import studio.tearule.repository.RuleRepository
@@ -23,7 +24,7 @@ class RuleEvaluationService(
             aromaScore = teaLot.aromaScore,
         )
 
-        val results: List<RuleResultDto> = ruleRepository.findAll().map { ruleResponse ->
+        val results: List<RuleResultDto> = (ruleRepository.findAll() as List<RuleResponse>).map { ruleResponse: RuleResponse ->
             val compiled = RuleDslParser.parse(ruleResponse.dsl)
             val evaluation = compiled.evaluate(snapshot)
 
@@ -46,7 +47,7 @@ class RuleEvaluationService(
             }
         }
 
-        val hasBlockFail = results.any { it.result == "FAIL" && it.severity == Severity.BLOCK }
+        val hasBlockFail = results.any { it.result == "FAIL" && it.severity == Severity.HIGH }
 
         return SimulationResponse(
             teaLotId = teaLotId,

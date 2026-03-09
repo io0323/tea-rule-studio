@@ -8,6 +8,7 @@ import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 import studio.tearule.api.dto.CreateTeaLotRequest
 import studio.tearule.api.dto.TeaLotResponse
 import studio.tearule.api.dto.UpdateTeaLotRequest
@@ -60,6 +61,27 @@ class TeaLotRepository {
     fun deleteByIds(ids: List<Long>): Int =
         transaction {
             TeaLots.deleteWhere { TeaLots.id inList ids }
+        }
+
+    fun update(id: Long, request: UpdateTeaLotRequest): TeaLotResponse? =
+        transaction {
+            // Validate input data for provided fields
+            validateUpdateTeaLotRequest(request)
+
+            val updatedRows = TeaLots.update({ TeaLots.id eq id }) { update ->
+                request.lotCode?.let { update[lotCode] = it }
+                request.origin?.let { update[origin] = it }
+                request.variety?.let { update[variety] = it }
+                request.moisture?.let { update[moisture] = it }
+                request.pesticideLevel?.let { update[pesticideLevel] = it }
+                request.aromaScore?.let { update[aromaScore] = it }
+            }
+
+            if (updatedRows > 0) {
+                findById(id)
+            } else {
+                null
+            }
         }
 
     private fun validateTeaLotRequest(request: CreateTeaLotRequest) {

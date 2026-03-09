@@ -8,8 +8,10 @@ import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 import studio.tearule.api.dto.CreateRuleRequest
 import studio.tearule.api.dto.RuleResponse
+import studio.tearule.api.dto.UpdateRuleRequest
 import studio.tearule.db.tables.Rules
 import studio.tearule.domain.Severity
 import studio.tearule.rules.RuleDslParser
@@ -50,6 +52,24 @@ class RuleRepository {
     fun deleteById(id: Long): Boolean =
         transaction {
             Rules.deleteWhere { Rules.id eq id } > 0
+        }
+
+    fun update(id: Long, request: UpdateRuleRequest): RuleResponse? =
+        transaction {
+            // Validate DSL if provided
+            request.dsl?.let { RuleDslParser.parse(it) }
+
+            val updatedRows = Rules.update({ Rules.id eq id }) { update ->
+                request.name?.let { update[name] = it }
+                request.dsl?.let { update[dsl] = it }
+                request.severity?.let { update[severity] = it.name }
+            }
+
+            if (updatedRows > 0) {
+                findById(id)
+            } else {
+                null
+            }
         }
 
     fun deleteByIds(ids: List<Long>): Int =
