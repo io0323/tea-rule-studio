@@ -47,7 +47,7 @@ class TeaLotRepository {
 
     fun findById(id: Long): TeaLotResponse? =
         transaction {
-            TeaLots.select { TeaLots.id eq id }
+            TeaLots.selectAll().where { TeaLots.id eq id }
                 .limit(1)
                 .firstOrNull()
                 ?.let(::toTeaLotResponse)
