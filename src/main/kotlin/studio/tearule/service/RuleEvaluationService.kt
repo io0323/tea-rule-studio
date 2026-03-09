@@ -23,25 +23,25 @@ class RuleEvaluationService(
             aromaScore = teaLot.aromaScore,
         )
 
-        val results = ruleRepository.findAll().map { rule ->
-            val compiled = RuleDslParser.parse(rule.dsl)
+        val results: List<RuleResultDto> = ruleRepository.findAll().map { ruleResponse ->
+            val compiled = RuleDslParser.parse(ruleResponse.dsl)
             val evaluation = compiled.evaluate(snapshot)
 
             when (evaluation) {
                 is RuleEvaluation.Pass ->
                     RuleResultDto(
-                        ruleId = rule.id,
+                        ruleId = ruleResponse.id,
                         result = "PASS",
-                        severity = rule.severity,
-                        message = "${rule.name}: pass",
+                        severity = ruleResponse.severity,
+                        message = "${ruleResponse.name}: pass",
                     )
 
                 is RuleEvaluation.Fail ->
                     RuleResultDto(
-                        ruleId = rule.id,
+                        ruleId = ruleResponse.id,
                         result = "FAIL",
-                        severity = rule.severity,
-                        message = "${rule.name}: ${evaluation.message}",
+                        severity = ruleResponse.severity,
+                        message = "${ruleResponse.name}: ${evaluation.message}",
                     )
             }
         }
