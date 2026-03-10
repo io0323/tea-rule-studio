@@ -31,6 +31,7 @@ import io.ktor.serialization.kotlinx.json.json
 import studio.tearule.api.routes.ruleRoutes
 import studio.tearule.api.routes.simulationRoutes
 import studio.tearule.api.routes.teaLotRoutes
+import kotlinx.serialization.ExperimentalSerializationApi
 
 fun main(args: Array<String>) {
     // Set port from environment variable if available
@@ -41,6 +42,7 @@ fun main(args: Array<String>) {
     EngineMain.main(args)
 }
 
+@OptIn(ExperimentalSerializationApi::class)
 fun Application.module() {
     DatabaseFactory.init(environment.config)
     InitialData.seedIfEmpty()
